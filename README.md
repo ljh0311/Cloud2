@@ -10,28 +10,82 @@ This project analyzes large-scale social media data to identify trends, popular 
 │   ├── hadoop/         # Hadoop MapReduce jobs
 │   ├── spark/          # Spark processing scripts
 │   ├── visualization/  # Data visualization scripts
-│   └── web/           # Web interface components
-├── utils/             # Utility functions and tracking tools
-├── config/            # Configuration files
-├── tests/            # Unit tests
-├── docs/             # Documentation
-├── requirements.txt   # Python dependencies
-└── README.md         # This file
+│   └── web/            # Web interface components
+├── utils/              # Utility functions and tracking tools
+├── config/             # Configuration files
+├── tests/              # Unit tests
+├── docs/               # Documentation
+├── requirements.txt    # Python dependencies
+└── README.md           # This file
 ```
 
 ## Setup Instructions
 
-1. Install Python 3.8 or higher
-2. Install Hadoop and ensure HADOOP_HOME is set
-3. Install Spark and ensure SPARK_HOME is set
-4. Create a virtual environment:
+### Prerequisites
+
+1. Python 3.8 or higher
+2. Hadoop 3.3.x or higher with HADOOP_HOME environment variable set
+3. Spark 3.5.0 or higher with SPARK_HOME environment variable set
+4. Git for version control
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/big-data-analytics.git
+   cd big-data-analytics
+   ```
+
+2. Create a virtual environment:
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
-5. Install dependencies:
+
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
+   ```
+
+4. Configure environment variables (create a .env file in the project root):
+   ```
+   HADOOP_HOME=/path/to/hadoop
+   SPARK_HOME=/path/to/spark
+   FLASK_APP=src.web.app
+   FLASK_ENV=development
+   ```
+
+## Running the Project
+
+### Web Application
+
+1. Start the web application:
+   ```bash
+   python -m src.web.run
+   ```
+   
+2. Access the web interface at http://localhost:5000
+
+### Data Processing Pipeline
+
+1. Data Ingestion:
+   ```bash
+   python -m src.data.ingest --source <source_path> --dest <destination_path>
+   ```
+
+2. Run MapReduce Jobs:
+   ```bash
+   python -m src.hadoop.runner --input <input_path> --output <output_path>
+   ```
+
+3. Run Spark Analysis:
+   ```bash
+   python -m src.spark.analyzer --input <input_path> --output <output_path>
+   ```
+
+4. Generate Visualizations:
+   ```bash
+   python -m src.visualization.generator --data <data_path> --output <output_path>
    ```
 
 ## Progress Tracking and Integration Management
@@ -104,25 +158,29 @@ The project includes a comprehensive tracking system to monitor progress and man
    - Manage integration points
    - View overdue tasks
 
-### Integration Points
+## Integration Points
 
 1. Storage to MapReduce:
    - Data storage system to MapReduce jobs
    - Managed by JH and Darrel
+   - Integration files: `src/data/storage.py` and `src/hadoop/input_reader.py`
 
 2. MapReduce to Spark:
    - MapReduce output to Spark analysis
    - Managed by Darrel and Xuan Yu
+   - Integration files: `src/hadoop/output_writer.py` and `src/spark/input_reader.py`
 
 3. Spark to Visualization:
    - Analysis results to visualization
    - Managed by Xuan Yu and Javin
+   - Integration files: `src/spark/output_writer.py` and `src/visualization/data_loader.py`
 
 4. Web to Visualization:
    - Web interface to visualization components
    - Managed by JH and Javin
+   - Integration files: `src/web/services.py` and `src/visualization/web_renderer.py`
 
-### Project Timeline
+## Project Timeline
 
 1. Individual Development (March 6-19, 2025):
    - Setup and component development
@@ -140,11 +198,7 @@ The project includes a comprehensive tracking system to monitor progress and man
    - Final documentation
    - Presentation preparation
 
-## Running the Project
-
-TODO: Add specific instructions for running each component
-
-## Team Members
+## Team Members and Responsibilities
 
 1. JH Tasks (Infrastructure & Web Interface):
    - Setup & Configuration
@@ -165,3 +219,25 @@ TODO: Add specific instructions for running each component
    - Dashboard design
    - Interactive visualizations
    - Analytics reports
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Hadoop Connection Issues**
+   - Ensure HADOOP_HOME is correctly set
+   - Verify Hadoop services are running with `jps` command
+
+2. **Spark Execution Errors**
+   - Check SPARK_HOME is correctly set
+   - Ensure Python dependencies are installed
+   - Verify Spark master is running
+
+3. **Web Application Not Starting**
+   - Check Flask environment variables
+   - Ensure port 5000 is not in use
+   - Verify virtual environment is activated
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
