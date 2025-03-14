@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Project Tracking Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Overall Progress -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Overall Project Progress</h4>
+        </div>
+        <div class="card-body">
+            <div class="progress mb-3">
+                <div class="progress-bar" role="progressbar" 
+                     style="width: {{ progress_data.overall_progress }}%"
+                     aria-valuenow="{{ progress_data.overall_progress }}" 
+                     aria-valuemin="0" aria-valuemax="100">
+                    {{ "%.1f"|format(progress_data.overall_progress) }}%
+                </div>
+            </div>
+            <p class="text-muted">Days until deadline: {{ progress_data.days_until_deadline }}</p>
+        </div>
+    </div>
+
+    <!-- Team Progress -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Team Progress</h4>
+                </div>
+                <div class="card-body">
+                    {% for member, progress in team_progress.items() %}
+                    <h5>{{ member }}</h5>
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {{ progress.individual_development }}%"
+                             aria-valuenow="{{ progress.individual_development }}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                            {{ "%.1f"|format(progress.individual_development) }}%
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Integration Status -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Integration Status</h4>
+                </div>
+                <div class="card-body">
+                    {% for point, status in integration_status.items() %}
+                    <div class="mb-3">
+                        <h5>{{ point|replace('_', ' ')|title }}</h5>
+                        <span class="badge {% if status.status == 'completed' %}bg-success
+                                         {% elif status.status == 'in_progress' %}bg-primary
+                                         {% else %}bg-secondary{% endif %}">
+                            {{ status.status|title }}
+                        </span>
+                        <p class="text-muted small">{{ status.message }}</p>
+                        <p class="text-muted small">Last update: {{ status.last_sync }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Progress Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Update Progress</h4>
+        </div>
+        <div class="card-body">
+            <form id="progressForm">
+                <div class="mb-3">
+                    <label for="phase" class="form-label">Phase</label>
+                    <select class="form-select" id="phase" required>
+                        <option value="individual_development">Individual Development</option>
+                        <option value="integration">Integration</option>
+                        <option value="testing">Testing</option>
+                        <option value="documentation">Documentation</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="taskPath" class="form-label">Task</label>
+                    <select class="form-select" id="taskPath" required>
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" required>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="progress" class="form-label">Progress (%)</label>
+                    <input type="number" class="form-control" id="progress" 
+                           min="0" max="100" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Progress</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Integration Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Update Integration Status</h4>
+        </div>
+        <div class="card-body">
+            <form id="integrationForm">
+                <div class="mb-3">
+                    <label for="integrationPoint" class="form-label">Integration Point</label>
+                    <select class="form-select" id="integrationPoint" required>
+                        <option value="storage_to_mapreduce">Storage to MapReduce</option>
+                        <option value="mapreduce_to_spark">MapReduce to Spark</option>
+                        <option value="spark_to_visualization">Spark to Visualization</option>
+                        <option value="web_to_visualization">Web to Visualization</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="integrationStatus" class="form-label">Status</label>
+                    <select class="form-select" id="integrationStatus" required>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="message" class="form-label">Message</label>
+                    <textarea class="form-control" id="message" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Integration</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overdue Tasks -->
+    {% if overdue_tasks %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning">
+            <h4>Overdue Tasks</h4>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for task in overdue_tasks %}
+                <li class="list-group-item">
+                    <h5>{{ task.task }}</h5>
+                    <p>Phase: {{ task.phase }}</p>
+                    <p>Due Date: {{ task.due_date }}</p>
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" role="progressbar" 
+                             style="width: {{ task.progress }}%"
+                             aria-valuenow="{{ task.progress }}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                            {{ task.progress }}%
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript for form handling -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const progressForm = document.getElementById('progressForm');
+    const integrationForm = document.getElementById('integrationForm');
+    const phaseSelect = document.getElementById('phase');
+    const taskPathSelect = document.getElementById('taskPath');
+
+    // Task options for each phase
+    const taskOptions = {
+        individual_development: {
+            'JH.data_storage_setup': 'JH - Data Storage Setup',
+            'JH.web_interface_setup': 'JH - Web Interface Setup',
+            'Darrel.mapreduce_implementation': 'Darrel - MapReduce Implementation',
+            'Darrel.data_cleaning': 'Darrel - Data Cleaning',
+            'Xuan_Yu.spark_setup': 'Xuan Yu - Spark Setup',
+            'Xuan_Yu.realtime_analysis': 'Xuan Yu - Realtime Analysis',
+            'Javin.visualization_dashboard': 'Javin - Visualization Dashboard',
+            'Javin.analytics_implementation': 'Javin - Analytics Implementation'
+        },
+        integration: {
+            'storage_mapreduce': 'Storage to MapReduce Integration',
+            'mapreduce_spark': 'MapReduce to Spark Integration',
+            'spark_visualization': 'Spark to Visualization Integration',
+            'web_visualization': 'Web to Visualization Integration'
+        },
+        testing: {
+            'unit_testing': 'Unit Testing',
+            'integration_testing': 'Integration Testing',
+            'performance_testing': 'Performance Testing',
+            'bug_fixes': 'Bug Fixes'
+        },
+        documentation: {
+            'technical_documentation': 'Technical Documentation',
+            'user_guide': 'User Guide',
+            'presentation_prep': 'Presentation Preparation'
+        }
+    };
+
+    // Update task options when phase changes
+    phaseSelect.addEventListener('change', function() {
+        const phase = this.value;
+        taskPathSelect.innerHTML = '';
+        
+        Object.entries(taskOptions[phase]).forEach(([value, text]) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = text;
+            taskPathSelect.appendChild(option);
+        });
+    });
+
+    // Trigger initial task options population
+    phaseSelect.dispatchEvent(new Event('change'));
+
+    // Handle progress form submission
+    progressForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        fetch('/api/progress/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                phase: phaseSelect.value,
+                task_path: taskPathSelect.value,
+                status: document.getElementById('status').value,
+                progress: parseInt(document.getElementById('progress').value)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Progress updated successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error updating progress: ' + error);
+        });
+    });
+
+    // Handle integration form submission
+    integrationForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        fetch('/api/integration/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                integration_point: document.getElementById('integrationPoint').value,
+                status: document.getElementById('integrationStatus').value,
+                message: document.getElementById('message').value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Integration status updated successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error updating integration status: ' + error);
+        });
+    });
+});
+</script>
+{% endblock %} 

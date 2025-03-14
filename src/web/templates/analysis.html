@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Analysis Configuration -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Data Source</h5>
+                </div>
+                <div class="card-body">
+                    <form id="data-source-form">
+                        <div class="mb-3">
+                            <label for="dataset" class="form-label">Select Dataset</label>
+                            <select class="form-select" id="dataset" required>
+                                <option value="">Choose a dataset...</option>
+                                <option value="twitter">Twitter Dataset</option>
+                                <option value="reddit">Reddit Comments</option>
+                                <option value="yelp">Yelp Reviews</option>
+                                <option value="amazon">Amazon Reviews</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date-range" class="form-label">Date Range</label>
+                            <input type="text" class="form-control" id="date-range" placeholder="Select date range">
+                        </div>
+                        <div class="mb-3">
+                            <label for="sample-size" class="form-label">Sample Size</label>
+                            <input type="number" class="form-control" id="sample-size" placeholder="Enter sample size">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Analysis Parameters</h5>
+                </div>
+                <div class="card-body">
+                    <form id="analysis-params-form">
+                        <div class="mb-3">
+                            <label class="form-label">Analysis Types</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="sentiment-analysis" checked>
+                                <label class="form-check-label" for="sentiment-analysis">
+                                    Sentiment Analysis
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="trend-detection" checked>
+                                <label class="form-check-label" for="trend-detection">
+                                    Trend Detection
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="user-engagement">
+                                <label class="form-check-label" for="user-engagement">
+                                    User Engagement Analysis
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="processing-mode" class="form-label">Processing Mode</label>
+                            <select class="form-select" id="processing-mode">
+                                <option value="batch">Batch Processing</option>
+                                <option value="streaming">Real-time Streaming</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Advanced Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="advanced-settings-form">
+                        <div class="mb-3">
+                            <label for="num-partitions" class="form-label">Number of Partitions</label>
+                            <input type="number" class="form-control" id="num-partitions" value="10">
+                        </div>
+                        <div class="mb-3">
+                            <label for="batch-size" class="form-label">Batch Size</label>
+                            <input type="number" class="form-control" id="batch-size" value="1000">
+                        </div>
+                        <div class="mb-3">
+                            <label for="window-size" class="form-label">Window Size (minutes)</label>
+                            <input type="number" class="form-control" id="window-size" value="60">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Control and Status -->
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Analysis Status</h5>
+                </div>
+                <div class="card-body">
+                    <div id="analysis-status">
+                        Select parameters and click "Run Analysis" to begin
+                    </div>
+                    <div class="progress mt-3" style="display: none;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Controls</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" id="run-analysis-btn">
+                            <i class="fas fa-play"></i> Run Analysis
+                        </button>
+                        <button class="btn btn-danger" id="stop-analysis-btn" disabled>
+                            <i class="fas fa-stop"></i> Stop Analysis
+                        </button>
+                        <button class="btn btn-secondary" id="save-config-btn">
+                            <i class="fas fa-save"></i> Save Configuration
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Metrics -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Real-time Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <div id="metrics-container">
+                        <!-- Metrics will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize date range picker
+    $(document).ready(function() {
+        $('#date-range').daterangepicker({
+            startDate: moment().subtract(7, 'days'),
+            endDate: moment(),
+            ranges: {
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+            }
+        });
+    });
+
+    // TODO: Implement form validation and analysis execution
+</script>
+{% endblock %} 

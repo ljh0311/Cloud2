@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">Big Data Analytics Dashboard</h1>
+    <p class="lead">Track project progress and manage component integration</p>
+    <hr class="my-4">
+    <p>Use the navigation menu to access different sections of the application.</p>
+    <a class="btn btn-primary btn-lg" href="/tracking" role="button">Go to Progress Tracking</a>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Progress Tracking</h5>
+                <p class="card-text">Monitor team progress and track individual tasks.</p>
+                <a href="/tracking" class="btn btn-primary">View Progress</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Data Analysis</h5>
+                <p class="card-text">Run and monitor data analysis tasks.</p>
+                <a href="/analysis" class="btn btn-primary">View Analysis</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Visualizations</h5>
+                <p class="card-text">View data visualizations and analytics.</p>
+                <a href="/visualizations" class="btn btn-primary">View Visualizations</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

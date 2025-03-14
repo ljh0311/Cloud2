@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Visualization Controls -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Visualization Controls</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="viz-dataset" class="form-label">Dataset</label>
+                                <select class="form-select" id="viz-dataset">
+                                    <option value="all">All Datasets</option>
+                                    <option value="twitter">Twitter</option>
+                                    <option value="reddit">Reddit</option>
+                                    <option value="yelp">Yelp</option>
+                                    <option value="amazon">Amazon</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="viz-type" class="form-label">Visualization Type</label>
+                                <select class="form-select" id="viz-type">
+                                    <option value="trends">Trend Analysis</option>
+                                    <option value="sentiment">Sentiment Analysis</option>
+                                    <option value="engagement">User Engagement</option>
+                                    <option value="topics">Topic Distribution</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="viz-timeframe" class="form-label">Time Frame</label>
+                                <select class="form-select" id="viz-timeframe">
+                                    <option value="1h">Last Hour</option>
+                                    <option value="24h">Last 24 Hours</option>
+                                    <option value="7d">Last 7 Days</option>
+                                    <option value="30d">Last 30 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="viz-refresh" class="form-label">Auto Refresh</label>
+                                <select class="form-select" id="viz-refresh">
+                                    <option value="0">Off</option>
+                                    <option value="30">Every 30 seconds</option>
+                                    <option value="60">Every minute</option>
+                                    <option value="300">Every 5 minutes</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualization Dashboard -->
+    <div class="row mt-4">
+        <!-- Trend Analysis -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Trend Analysis</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="trends-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sentiment Analysis -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Sentiment Distribution</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="sentiment-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- User Engagement -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">User Engagement</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="engagement-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Topic Distribution -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Topic Distribution</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="topics-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Initialize charts
+    document.addEventListener('DOMContentLoaded', function() {
+        // TODO: Implement chart initialization and data loading
+        // This will be connected to your backend APIs
+    });
+
+    // Handle visualization controls
+    document.querySelectorAll('select').forEach(select => {
+        select.addEventListener('change', function() {
+            updateVisualizations();
+        });
+    });
+
+    function updateVisualizations() {
+        // TODO: Implement visualization updates based on selected options
+    }
+</script>
+{% endblock %} 

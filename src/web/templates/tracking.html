@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Progress Tracking{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress {
+        height: 25px;
+    }
+    .component-card {
+        margin-bottom: 20px;
+    }
+    .file-status {
+        padding: 5px 10px;
+        border-radius: 4px;
+        margin: 2px 0;
+    }
+    .file-status.complete {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .file-status.pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Project Progress Tracking</h1>
+    
+    <!-- Overall Progress -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">Overall Progress</h4>
+            <div class="progress">
+                <div class="progress-bar" role="progressbar" 
+                     style="width: {{ '%0.1f' % progress_data.overall_progress }}%"
+                     aria-valuenow="{{ '%0.1f' % progress_data.overall_progress }}"
+                     aria-valuemin="0" aria-valuemax="100">
+                    {{ '%0.1f' % progress_data.overall_progress }}%
+                </div>
+            </div>
+            <p class="text-muted mt-2">Last updated: {{ progress_data.timestamp }}</p>
+        </div>
+    </div>
+
+    <!-- Component Progress -->
+    <h2 class="mb-3">Component Progress</h2>
+    <div class="row">
+        {% for component, data in progress_data.components.items() %}
+        <div class="col-md-6">
+            <div class="card component-card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ component }}</h5>
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar"
+                             style="width: {{ '%0.1f' % data.progress }}%"
+                             aria-valuenow="{{ '%0.1f' % data.progress }}"
+                             aria-valuemin="0" aria-valuemax="100">
+                            {{ '%0.1f' % data.progress }}%
+                        </div>
+                    </div>
+                    
+                    <h6>Files:</h6>
+                    {% for file, exists in data.files.items() %}
+                    <div class="file-status {% if exists %}complete{% else %}pending{% endif %}">
+                        <i class="fas fa-{% if exists %}check{% else %}clock{% endif %}"></i>
+                        {{ file }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+<script>
+    // Auto-refresh progress every 30 seconds
+    setInterval(function() {
+        fetch('/api/progress')
+            .then(response => response.json())
+            .then(data => {
+                // Update the progress bars and file statuses
+                // This is a placeholder for future enhancement
+                console.log('Progress updated:', data);
+            })
+            .catch(error => console.error('Error updating progress:', error));
+    }, 30000);
+</script>
+{% endblock %}
+{% endblock %} 
