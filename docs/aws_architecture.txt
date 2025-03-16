@@ -1,0 +1,21 @@
++------------------+     +------------------+     +------------------+
+|                  |     |                  |     |                  |
+|  S3 Buckets      |     |  EC2 Instance    |     |  EMR Cluster     |
+|  - Raw Data      |<--->|  - Web App       |<--->|  - Hadoop        |
+|  - Processed Data|     |  - Flask API     |     |  - Spark         |
+|  - EMR Logs      |     |  - Nginx         |     |  - Hive          |
+|                  |     |                  |     |                  |
++------------------+     +------------------+     +------------------+
+         ^                        ^                        ^
+         |                        |                        |
+         v                        v                        v
++------------------+     +------------------+     +------------------+
+|                  |     |                  |     |                  |
+|  RDS Database    |     |  IAM Roles       |     |  CloudWatch      |
+|  - PostgreSQL    |<--->|  - EC2 Role      |     |  - Monitoring    |
+|  - Metadata      |     |  - EMR Roles     |     |  - Alarms        |
+|  - Results       |     |  - S3 Access     |     |  - Logs          |
+|                  |     |                  |     |                  |
++------------------+     +------------------+     +------------------+
+
+Big Data Analytics - AWS Architecture 
