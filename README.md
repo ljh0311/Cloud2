@@ -1,242 +1,170 @@
-# Big Data Analytics Project
+# Big Data Analytics Project - AWS Deployment Guide
 
-This project analyzes large-scale social media data to identify trends, popular topics, and user engagement patterns using Hadoop and Spark.
+This guide provides detailed instructions for deploying the Big Data Analytics project on AWS infrastructure, including EC2 instances, RDS/S3 for data storage, and EMR clusters for Hadoop/Spark processing.
 
-## Project Structure
+## AWS Infrastructure Overview
 
 ```
-├── src/
-│   ├── data/           # Data ingestion and preprocessing scripts
-│   ├── hadoop/         # Hadoop MapReduce jobs
-│   ├── spark/          # Spark processing scripts
-│   ├── visualization/  # Data visualization scripts
-│   └── web/            # Web interface components
-├── utils/              # Utility functions and tracking tools
-├── config/             # Configuration files
-├── tests/              # Unit tests
-├── docs/               # Documentation
++------------------+     +------------------+     +------------------+
+|                  |     |                  |     |                  |
+|  S3 Buckets      |     |  EC2 Instance    |     |  EMR Cluster     |
+|  - Raw Data      |<--->|  - Web App       |<--->|  - Hadoop        |
+|  - Processed Data|     |  - Flask API     |     |  - Spark         |
+|  - EMR Logs      |     |  - Nginx         |     |  - Hive          |
+|                  |     |                  |     |                  |
++------------------+     +------------------+     +------------------+
+         ^                        ^                        ^
+         |                        |                        |
+         v                        v                        v
++------------------+     +------------------+     +------------------+
+|                  |     |                  |     |                  |
+|  RDS Database    |     |  IAM Roles       |     |  CloudWatch      |
+|  - PostgreSQL    |<--->|  - EC2 Role      |     |  - Monitoring    |
+|  - Metadata      |     |  - EMR Roles     |     |  - Alarms        |
+|  - Results       |     |  - S3 Access     |     |  - Logs          |
+|                  |     |                  |     |                  |
++------------------+     +------------------+     +------------------+
+```
+
+The deployment uses the following AWS services:
+- **EC2**: For running the web application and coordination services
+- **S3**: For storing raw and processed data
+- **RDS**: For storing application metadata and results
+- **EMR**: For running Hadoop and Spark jobs
+- **IAM**: For managing access permissions between services
+
+## Prerequisites
+
+1. AWS Account with appropriate permissions
+2. Access to AWS Management Console
+3. Project files prepared locally
+4. Basic understanding of AWS services
+
+## Project Structure for AWS Deployment
+
+```
+├── aws/                # AWS deployment scripts and templates
+│   ├── cloudformation/ # CloudFormation templates
+│   ├── scripts/        # Deployment and setup scripts
+│   └── config/         # AWS configuration files
+├── src/                # Application source code
+├── data/               # Sample data and data schemas
 ├── requirements.txt    # Python dependencies
 └── README.md           # This file
 ```
 
-## Setup Instructions
+## Deployment Instructions
 
-### Prerequisites
+For detailed step-by-step instructions using the AWS Management Console, please refer to:
 
-1. Python 3.8 or higher
-2. Hadoop 3.3.x or higher with HADOOP_HOME environment variable set
-3. Spark 3.5.0 or higher with SPARK_HOME environment variable set
-4. Git for version control
+[AWS Web Console Deployment Instructions](aws/scripts/deploy-instructions.md)
 
-### Installation
+This document provides comprehensive guidance for setting up all required AWS services through the web interface.
 
-1. Clone the repository:
+## Deployment Checklist
+
+To help track your progress during deployment, use the provided checklist:
+
+[AWS Deployment Checklist](aws/scripts/deployment-checklist.md)
+
+## CloudFormation Template (Optional)
+
+For automated deployment, a CloudFormation template is provided:
+
+[Big Data Infrastructure Template](aws/cloudformation/big-data-infrastructure.yaml)
+
+To use this template:
+1. Sign in to the AWS Management Console
+2. Navigate to CloudFormation
+3. Click "Create stack" > "With new resources"
+4. Upload the template file
+5. Follow the prompts to configure and create the stack
+
+## Preparing Jobs for Deployment
+
+To prepare your Hadoop and Spark jobs for deployment to AWS:
+
+1. Run the preparation script:
    ```bash
-   git clone https://github.com/your-username/big-data-analytics.git
-   cd big-data-analytics
+   python aws/scripts/prepare-jobs.py --bucket your-project-raw-data
    ```
 
-2. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+2. This will:
+   - Create a deployment directory structure
+   - Copy Hadoop and Spark jobs to the appropriate locations
+   - Create an upload script for pushing files to S3
 
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+3. Upload the prepared files to S3 using the AWS Management Console:
+   - Navigate to S3 in the AWS Management Console
+   - Select your raw data bucket
+   - Create folders for "hadoop-jobs", "spark-jobs", and "config"
+   - Upload the files from the local "deploy" directory to the corresponding S3 folders
 
-4. Configure environment variables (create a .env file in the project root):
-   ```
-   HADOOP_HOME=/path/to/hadoop
-   SPARK_HOME=/path/to/spark
-   FLASK_APP=src.web.app
-   FLASK_ENV=development
-   ```
-
-## Running the Project
-
-### Web Application
-
-1. Start the web application:
-   ```bash
-   python -m src.web.run
-   ```
-   
-2. Access the web interface at http://localhost:5000
-
-### Data Processing Pipeline
+## Data Pipeline on AWS
 
 1. Data Ingestion:
-   ```bash
-   python -m src.data.ingest --source <source_path> --dest <destination_path>
-   ```
+   - Upload data to S3 raw data bucket
+   - Trigger Lambda function for preprocessing (optional)
 
-2. Run MapReduce Jobs:
-   ```bash
-   python -m src.hadoop.runner --input <input_path> --output <output_path>
-   ```
+2. Data Processing:
+   - Run EMR jobs for data transformation
+   - Store processed data in S3 processed data bucket
 
-3. Run Spark Analysis:
-   ```bash
-   python -m src.spark.analyzer --input <input_path> --output <output_path>
-   ```
+3. Data Analysis:
+   - Run Spark jobs on EMR for advanced analytics
+   - Store results in RDS database
 
-4. Generate Visualizations:
-   ```bash
-   python -m src.visualization.generator --data <data_path> --output <output_path>
-   ```
+4. Data Visualization:
+   - Access web application on EC2 to view results
+   - Generate reports and dashboards
 
-## Progress Tracking and Integration Management
+## Monitoring and Management
 
-The project includes a comprehensive tracking system to monitor progress and manage component integration. Access the tracking dashboard at `http://localhost:5000/tracking` after starting the web application.
+For monitoring your AWS resources:
 
-### Setting Up Progress Tracking
+1. Use CloudWatch for metrics and alarms
+2. Set up SNS notifications for important events
+3. Review EMR logs stored in S3
+4. Monitor RDS performance metrics
 
-1. Initialize the tracking system:
-   ```python
-   from utils.progress_tracker import ProgressTracker
-   tracker = ProgressTracker(".")
-   ```
+## Cost Optimization
 
-2. Update task progress:
-   ```python
-   # Update individual task progress
-   tracker.update_task_progress(
-       phase="individual_development",
-       task_path="your_name.task_name",
-       status="in_progress",
-       progress=50  # percentage complete
-   )
-   ```
+To optimize costs in your AWS deployment:
 
-3. Check progress:
-   ```python
-   # Get overall progress
-   progress = tracker.get_overall_progress()
-   
-   # Get team member progress
-   member_progress = tracker.get_team_member_progress("your_name")
-   
-   # Check overdue tasks
-   overdue = tracker.check_overdue_tasks()
-   ```
+1. Use Spot Instances for EMR task nodes
+2. Configure S3 lifecycle policies for data tiering
+3. Schedule EMR cluster auto-termination
+4. Right-size RDS instances based on workload
 
-### Managing Component Integration
+## Security Best Practices
 
-1. Initialize the integration manager:
-   ```python
-   from utils.integration_manager import IntegrationManager
-   manager = IntegrationManager(".")
-   ```
-
-2. Update integration status:
-   ```python
-   # Update integration point status
-   manager.update_integration_status(
-       "integration_point_name",
-       "in_progress",
-       "Status message"
-   )
-   ```
-
-3. Check integration readiness:
-   ```python
-   # Check if components are ready for integration
-   ready, message = manager.check_integration_readiness("integration_point_name")
-   ```
-
-### Using the Web Interface
-
-1. Access the tracking dashboard at `/tracking`
-2. Features available:
-   - View overall project progress
-   - Monitor team member progress
-   - Track integration status
-   - Update task progress
-   - Manage integration points
-   - View overdue tasks
-
-## Integration Points
-
-1. Storage to MapReduce:
-   - Data storage system to MapReduce jobs
-   - Managed by JH and Darrel
-   - Integration files: `src/data/storage.py` and `src/hadoop/input_reader.py`
-
-2. MapReduce to Spark:
-   - MapReduce output to Spark analysis
-   - Managed by Darrel and Xuan Yu
-   - Integration files: `src/hadoop/output_writer.py` and `src/spark/input_reader.py`
-
-3. Spark to Visualization:
-   - Analysis results to visualization
-   - Managed by Xuan Yu and Javin
-   - Integration files: `src/spark/output_writer.py` and `src/visualization/data_loader.py`
-
-4. Web to Visualization:
-   - Web interface to visualization components
-   - Managed by JH and Javin
-   - Integration files: `src/web/services.py` and `src/visualization/web_renderer.py`
-
-## Project Timeline
-
-1. Individual Development (March 6-19, 2025):
-   - Setup and component development
-   - Regular progress updates required
-
-2. Integration Phase (March 20-26, 2025):
-   - Component integration
-   - Daily status updates recommended
-
-3. Testing Phase (March 27-April 2, 2025):
-   - Testing and refinement
-   - Bug tracking and fixes
-
-4. Documentation (April 3, 2025):
-   - Final documentation
-   - Presentation preparation
-
-## Team Members and Responsibilities
-
-1. JH Tasks (Infrastructure & Web Interface):
-   - Setup & Configuration
-   - Web application framework
-   - Data storage modules
-
-2. Darrel's Tasks (MapReduce & Batch Processing):
-   - MapReduce jobs
-   - Data cleaning
-   - Batch processing pipeline
-
-3. Xuan Yu's Tasks (Spark & Real-time Analysis):
-   - Spark streaming
-   - Real-time analysis
-   - Trend detection
-
-4. Javin's Tasks (Visualization & Analytics):
-   - Dashboard design
-   - Interactive visualizations
-   - Analytics reports
+1. Use IAM roles instead of access keys when possible
+2. Enable encryption for S3 buckets and RDS instances
+3. Use security groups to restrict access to resources
+4. Regularly rotate credentials and audit access logs
+5. Use VPC for network isolation
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Hadoop Connection Issues**
-   - Ensure HADOOP_HOME is correctly set
-   - Verify Hadoop services are running with `jps` command
+1. **EC2 Connection Issues**
+   - Verify security group allows HTTP (port 80)
+   - Ensure your instance is in the "running" state
 
-2. **Spark Execution Errors**
-   - Check SPARK_HOME is correctly set
-   - Ensure Python dependencies are installed
-   - Verify Spark master is running
+2. **S3 Access Issues**
+   - Verify IAM roles and policies are correctly configured
+   - Check bucket permissions and CORS configuration
 
-3. **Web Application Not Starting**
-   - Check Flask environment variables
-   - Ensure port 5000 is not in use
-   - Verify virtual environment is activated
+3. **EMR Job Failures**
+   - Check EMR logs in S3 bucket
+   - Verify input/output paths are correct
+   - Ensure sufficient resources for the job
+
+4. **RDS Connection Issues**
+   - Verify security group allows PostgreSQL (port 5432) from your EC2 security group
+   - Check database credentials in the .env file
+   - Ensure the RDS instance is in the "available" state
 
 ## License
 

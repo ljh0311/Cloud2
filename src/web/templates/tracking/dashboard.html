@@ -2,8 +2,30 @@
 
 {% block title %}Project Tracking Dashboard{% endblock %}
 
+{% block extra_css %}
+<style>
+    .progress {
+        height: 25px;
+    }
+    .card {
+        margin-bottom: 20px;
+    }
+    .badge {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
+    <!-- Back to simple tracking -->
+    <div class="mb-4">
+        <a href="/tracking" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Simple Tracking
+        </a>
+    </div>
+    
     <!-- Overall Progress -->
     <div class="card mb-4">
         <div class="card-header">
@@ -170,8 +192,10 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
 
-<!-- JavaScript for form handling -->
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const progressForm = document.getElementById('progressForm');

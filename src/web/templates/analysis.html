@@ -1,153 +1,792 @@
 {% extends "base.html" %}
 
+{% block title %}Data Analysis{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+    .analysis-card {
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .analysis-card .card-header {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    .metric-card {
+        text-align: center;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    .metric-value {
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .metric-label {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    #real-time-chart {
+        height: 300px;
+    }
+    .tab-content {
+        padding: 20px;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 5px 5px;
+    }
+    .info-icon {
+        color: #17a2b8;
+        cursor: pointer;
+        margin-left: 5px;
+    }
+    .processing-mode-info {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        border-left: 4px solid #17a2b8;
+        display: none;
+    }
+    .processing-mode-info h6 {
+        margin-bottom: 8px;
+        font-weight: bold;
+    }
+    .processing-mode-info p {
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+    .processing-mode-comparison {
+        margin-top: 10px;
+    }
+    .processing-mode-comparison table {
+        width: 100%;
+        font-size: 0.85rem;
+    }
+    .processing-mode-comparison th {
+        background-color: #e9ecef;
+    }
+    .help-icon {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-left: 5px;
+        cursor: help;
+    }
+    /* Custom tooltip styling */
+    .tooltip-inner {
+        max-width: 300px;
+        text-align: left;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <!-- Analysis Configuration -->
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Data Source</h5>
-                </div>
-                <div class="card-body">
-                    <form id="data-source-form">
-                        <div class="mb-3">
-                            <label for="dataset" class="form-label">Select Dataset</label>
-                            <select class="form-select" id="dataset" required>
-                                <option value="">Choose a dataset...</option>
-                                <option value="twitter">Twitter Dataset</option>
-                                <option value="reddit">Reddit Comments</option>
-                                <option value="yelp">Yelp Reviews</option>
-                                <option value="amazon">Amazon Reviews</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="date-range" class="form-label">Date Range</label>
-                            <input type="text" class="form-control" id="date-range" placeholder="Select date range">
-                        </div>
-                        <div class="mb-3">
-                            <label for="sample-size" class="form-label">Sample Size</label>
-                            <input type="number" class="form-control" id="sample-size" placeholder="Enter sample size">
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Analysis Parameters</h5>
-                </div>
-                <div class="card-body">
-                    <form id="analysis-params-form">
-                        <div class="mb-3">
-                            <label class="form-label">Analysis Types</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="sentiment-analysis" checked>
-                                <label class="form-check-label" for="sentiment-analysis">
-                                    Sentiment Analysis
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="trend-detection" checked>
-                                <label class="form-check-label" for="trend-detection">
-                                    Trend Detection
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="user-engagement">
-                                <label class="form-check-label" for="user-engagement">
-                                    User Engagement Analysis
-                                </label>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="processing-mode" class="form-label">Processing Mode</label>
-                            <select class="form-select" id="processing-mode">
-                                <option value="batch">Batch Processing</option>
-                                <option value="streaming">Real-time Streaming</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Advanced Settings</h5>
-                </div>
-                <div class="card-body">
-                    <form id="advanced-settings-form">
-                        <div class="mb-3">
-                            <label for="num-partitions" class="form-label">Number of Partitions</label>
-                            <input type="number" class="form-control" id="num-partitions" value="10">
-                        </div>
-                        <div class="mb-3">
-                            <label for="batch-size" class="form-label">Batch Size</label>
-                            <input type="number" class="form-control" id="batch-size" value="1000">
-                        </div>
-                        <div class="mb-3">
-                            <label for="window-size" class="form-label">Window Size (minutes)</label>
-                            <input type="number" class="form-control" id="window-size" value="60">
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Analysis Control and Status -->
-    <div class="row mt-4">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Analysis Status</h5>
-                </div>
-                <div class="card-body">
-                    <div id="analysis-status">
-                        Select parameters and click "Run Analysis" to begin
-                    </div>
-                    <div class="progress mt-3" style="display: none;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Controls</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-primary" id="run-analysis-btn">
-                            <i class="fas fa-play"></i> Run Analysis
-                        </button>
-                        <button class="btn btn-danger" id="stop-analysis-btn" disabled>
-                            <i class="fas fa-stop"></i> Stop Analysis
-                        </button>
-                        <button class="btn btn-secondary" id="save-config-btn">
-                            <i class="fas fa-save"></i> Save Configuration
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Real-time Metrics -->
-    <div class="row mt-4">
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
+            <h2>Big Data Analysis</h2>
+            <p class="lead">Configure and run big data analysis on social media datasets using Hadoop and Spark</p>
+            
+            <!-- Help Guide Button -->
+            <button class="btn btn-outline-info mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#helpGuide" aria-expanded="false" aria-controls="helpGuide">
+                <i class="fas fa-question-circle"></i> Show Analysis Guide
+            </button>
+            
+            <!-- Collapsible Help Guide -->
+            <div class="collapse mb-4" id="helpGuide">
+                <div class="card card-body">
+                    <h4>Analysis Page Guide</h4>
+                    <p>This page allows you to configure and run big data analysis on social media datasets. Here's a quick overview of each section:</p>
+                    
+                    <h5>Basic Configuration</h5>
+                    <ul>
+                        <li><strong>Dataset Selection</strong> - Choose from pre-loaded datasets, search for new ones, or scrape data from social media platforms.</li>
+                        <li><strong>Date Range</strong> - Limit your analysis to a specific time period.</li>
+                        <li><strong>Analysis Types</strong> - Select which types of analysis to perform (sentiment, trends, engagement, topics).</li>
+                        <li><strong>Processing Mode</strong> - Choose between batch processing (for large historical data), real-time streaming (for immediate insights), or hybrid mode.</li>
+                    </ul>
+                    
+                    <h5>Hadoop Settings</h5>
+                    <ul>
+                        <li><strong>MapReduce Job Type</strong> - Select the type of MapReduce job to run.</li>
+                        <li><strong>Input Format</strong> - Specify the format of your input data (text, sequence files, Avro, Parquet).</li>
+                        <li><strong>Number of Reducers</strong> - Control parallelism in the reduce phase.</li>
+                        <li><strong>HDFS Output Path</strong> - Specify where to save the results.</li>
+                    </ul>
+                    
+                    <h5>Spark Settings</h5>
+                    <ul>
+                        <li><strong>Spark Master</strong> - Specify the Spark cluster manager.</li>
+                        <li><strong>Executor Memory/Cores</strong> - Allocate resources to Spark executors.</li>
+                        <li><strong>Streaming Settings</strong> - Configure batch intervals and window durations for streaming analysis.</li>
+                        <li><strong>Checkpoint Directory</strong> - Set up fault tolerance for streaming jobs.</li>
+                    </ul>
+                    
+                    <h5>Advanced Settings</h5>
+                    <ul>
+                        <li><strong>Sample Size</strong> - Limit analysis to a random sample of the data.</li>
+                        <li><strong>Partitioning</strong> - Control how data is distributed across the cluster.</li>
+                        <li><strong>Caching</strong> - Optimize performance by caching intermediate results.</li>
+                        <li><strong>Custom Configuration</strong> - Add advanced parameters in JSON format.</li>
+                    </ul>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Hover over any setting label to see a detailed explanation of its purpose and recommended values.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Configuration Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card analysis-card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Real-time Metrics</h5>
+                    <ul class="nav nav-tabs card-header-tabs" id="analysis-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">Basic Configuration</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="hadoop-tab" data-bs-toggle="tab" data-bs-target="#hadoop" type="button" role="tab" aria-controls="hadoop" aria-selected="false">Hadoop Settings</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="spark-tab" data-bs-toggle="tab" data-bs-target="#spark" type="button" role="tab" aria-controls="spark" aria-selected="false">Spark Settings</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab" aria-controls="advanced" aria-selected="false">Advanced</button>
+                        </li>
+                    </ul>
                 </div>
                 <div class="card-body">
-                    <div id="metrics-container">
-                        <!-- Metrics will be populated by JavaScript -->
+                    <div class="tab-content" id="analysis-tabs-content">
+                        <!-- Basic Configuration Tab -->
+                        <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label class="form-label">
+                                            <h5>Dataset Selection <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Choose a dataset to analyze. Select from pre-loaded datasets, search for new ones, or scrape data from social media platforms."></i></h5>
+                                        </label>
+                                        
+                                        <!-- Dataset Selection Cards -->
+                                        <div class="row g-3 mb-3">
+                                            <!-- Pre-loaded Datasets -->
+                                            <div class="col-md-6">
+                                                <div class="card h-100 dataset-card" data-dataset-type="preloaded">
+                                                    <div class="card-body">
+                                                        <h6 class="card-title"><i class="fas fa-database text-primary me-2"></i>System Datasets</h6>
+                                                        <p class="card-text small">Use pre-loaded datasets that are ready for analysis.</p>
+                                                    </div>
+                                                    <div class="card-footer bg-transparent">
+                                                        <button class="btn btn-sm btn-outline-primary w-100 select-dataset-type-btn">Select</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Custom Dataset -->
+                                            <div class="col-md-6">
+                                                <div class="card h-100 dataset-card" data-dataset-type="custom">
+                                                    <div class="card-body">
+                                                        <h6 class="card-title"><i class="fas fa-file-upload text-success me-2"></i>Custom Dataset</h6>
+                                                        <p class="card-text small">Use your own dataset from HDFS or local storage.</p>
+                                                    </div>
+                                                    <div class="card-footer bg-transparent">
+                                                        <button class="btn btn-sm btn-outline-primary w-100 select-dataset-type-btn">Select</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Search for Datasets -->
+                                            <div class="col-md-6">
+                                                <div class="card h-100 dataset-card" data-dataset-type="search">
+                                                    <div class="card-body">
+                                                        <h6 class="card-title"><i class="fas fa-search text-info me-2"></i>Search for Datasets</h6>
+                                                        <p class="card-text small">Find and download datasets from online repositories.</p>
+                                                    </div>
+                                                    <div class="card-footer bg-transparent">
+                                                        <button class="btn btn-sm btn-outline-primary w-100 select-dataset-type-btn">Select</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Scrape New Data -->
+                                            <div class="col-md-6">
+                                                <div class="card h-100 dataset-card" data-dataset-type="scrape">
+                                                    <div class="card-body">
+                                                        <h6 class="card-title"><i class="fas fa-cloud-download-alt text-warning me-2"></i>Scrape New Data</h6>
+                                                        <p class="card-text small">Collect fresh data from social media platforms.</p>
+                                                    </div>
+                                                    <div class="card-footer bg-transparent">
+                                                        <button class="btn btn-sm btn-outline-primary w-100 select-dataset-type-btn">Select</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Hidden original dataset selector (kept for compatibility) -->
+                                        <select class="form-select d-none" id="dataset" required>
+                                            <option value="">Choose a dataset...</option>
+                                            <option value="twitter">Twitter Dataset</option>
+                                            <option value="reddit">Reddit Comments</option>
+                                            <option value="yelp">Yelp Reviews</option>
+                                            <option value="amazon">Amazon Reviews</option>
+                                            <option value="custom">Custom Dataset</option>
+                                            <option value="search">Search for Datasets</option>
+                                            <option value="scrape">Scrape New Data</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- System Datasets Container (replaces both preloaded and available datasets) -->
+                                    <div id="preloaded-dataset-container" style="display: none;">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                Available System Datasets
+                                                <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                   title="These datasets are already available in the system and ready for immediate analysis. Select one to use for your analysis."></i>
+                                            </label>
+                                            <button class="btn btn-sm btn-outline-secondary mb-2" id="refresh-datasets-btn">
+                                                <i class="fas fa-sync-alt"></i> Refresh List
+                                            </button>
+                                            <div class="card">
+                                                <div class="card-body p-0">
+                                                    <div class="list-group list-group-flush" id="available-datasets-list">
+                                                        <div class="list-group-item text-center text-muted py-3">
+                                                            Loading available datasets...
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3 p-3 border rounded dataset-info" id="preloaded-dataset-info" style="display: none;">
+                                                <h6 class="dataset-info-title">Dataset Information</h6>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <p class="mb-1"><strong>Size:</strong> <span class="dataset-size">-</span></p>
+                                                        <p class="mb-1"><strong>Records:</strong> <span class="dataset-records">-</span></p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <p class="mb-1"><strong>Format:</strong> <span class="dataset-format">-</span></p>
+                                                        <p class="mb-1"><strong>Last Updated:</strong> <span class="dataset-updated">-</span></p>
+                                                    </div>
+                                                </div>
+                                                <p class="small dataset-description mt-2">-</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Custom Dataset Container -->
+                                    <div class="mb-3" id="custom-dataset-container" style="display: none;">
+                                        <label for="custom-dataset-path" class="form-label">
+                                            Custom Dataset Path
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Enter the HDFS path to your custom dataset. This should be a fully qualified path accessible by the Hadoop cluster."></i>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="custom-dataset-path" placeholder="Enter HDFS path">
+                                            <button class="btn btn-outline-secondary" type="button" id="browse-dataset-btn">
+                                                <i class="fas fa-folder-open"></i> Browse
+                                            </button>
+                                        </div>
+                                        <div class="form-text">Example: /user/data/twitter_data.csv or hdfs://namenode:8020/user/data/twitter_data.csv</div>
+                                        
+                                        <div class="mt-3">
+                                            <label for="custom-dataset-format" class="form-label">Dataset Format</label>
+                                            <select class="form-select" id="custom-dataset-format">
+                                                <option value="csv">CSV</option>
+                                                <option value="json">JSON</option>
+                                                <option value="parquet">Parquet</option>
+                                                <option value="avro">Avro</option>
+                                                <option value="text">Plain Text</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Dataset Search Container -->
+                                    <div id="dataset-search-container" style="display: none;">
+                                        <div class="mb-3">
+                                            <label for="dataset-search-query" class="form-label">
+                                                Search for Datasets
+                                                <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                   title="Enter keywords to search for relevant datasets across various data sources."></i>
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="dataset-search-query" placeholder="Enter search terms...">
+                                                <button class="btn btn-outline-primary" type="button" id="dataset-search-btn">Search</button>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                Data Source
+                                                <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                   title="Select which data repositories to search. 'All Sources' will search across all available repositories."></i>
+                                            </label>
+                                            <select class="form-select" id="dataset-search-source">
+                                                <option value="all">All Sources</option>
+                                                <option value="kaggle">Kaggle</option>
+                                                <option value="twitter">Twitter</option>
+                                                <option value="reddit">Reddit</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h6 class="mb-0">Search Results</h6>
+                                                </div>
+                                                <div class="card-body p-0">
+                                                    <div class="list-group list-group-flush" id="dataset-search-results">
+                                                        <div class="list-group-item text-center text-muted py-3">
+                                                            Enter search terms and click "Search" to find datasets
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Dataset Scraping Container -->
+                                    <div id="dataset-scrape-container" style="display: none;">
+                                        <div class="mb-3">
+                                            <label for="scrape-source" class="form-label">
+                                                Data Source to Scrape
+                                                <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                   title="Select the social media platform to collect data from. Each platform has different data formats and API limitations."></i>
+                                            </label>
+                                            <select class="form-select" id="scrape-source">
+                                                <option value="twitter">Twitter</option>
+                                                <option value="reddit">Reddit</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- Twitter Scraping Options -->
+                                        <div id="twitter-scrape-options">
+                                            <div class="mb-3">
+                                                <label for="twitter-query" class="form-label">
+                                                    Search Query
+                                                    <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                       title="Enter keywords, hashtags, or phrases to search for on Twitter. You can use operators like AND, OR, and quotes for exact phrases."></i>
+                                                </label>
+                                                <input type="text" class="form-control" id="twitter-query" placeholder="Enter keywords to search for...">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="twitter-limit" class="form-label">
+                                                    Number of Tweets
+                                                    <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                       title="Specify how many tweets to collect. Higher numbers will take longer to scrape but provide more data for analysis."></i>
+                                                </label>
+                                                <input type="number" class="form-control" id="twitter-limit" value="100" min="10" max="1000">
+                                            </div>
+                                            <div class="mb-3">
+                                                <button class="btn btn-primary" id="twitter-scrape-btn">
+                                                    <i class="fas fa-download"></i> Scrape Twitter Data
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Reddit Scraping Options -->
+                                        <div id="reddit-scrape-options" style="display: none;">
+                                            <div class="mb-3">
+                                                <label for="reddit-subreddit" class="form-label">
+                                                    Subreddit
+                                                    <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                       title="Enter the name of the subreddit to scrape (without the 'r/'). For example: 'datascience' or 'machinelearning'."></i>
+                                                </label>
+                                                <input type="text" class="form-control" id="reddit-subreddit" placeholder="Enter subreddit name (without r/)">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="reddit-limit" class="form-label">
+                                                    Number of Posts
+                                                    <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                       title="Specify how many Reddit posts to collect. Each post may include multiple comments."></i>
+                                                </label>
+                                                <input type="number" class="form-control" id="reddit-limit" value="100" min="10" max="1000">
+                                            </div>
+                                            <div class="mb-3">
+                                                <button class="btn btn-primary" id="reddit-scrape-btn">
+                                                    <i class="fas fa-download"></i> Scrape Reddit Data
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Scraping Status -->
+                                        <div class="mb-3" id="scrape-status-container" style="display: none;">
+                                            <div class="alert alert-info" id="scrape-status">
+                                                Scraping in progress...
+                                            </div>
+                                            <div class="progress mb-2">
+                                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="date-range" class="form-label">
+                                            Date Range
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Select the time period for data analysis. Only data within this date range will be processed."></i>
+                                        </label>
+                                        <input type="text" class="form-control" id="date-range" placeholder="Select date range">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            Analysis Types
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Select the types of analysis to perform on the data. You can choose multiple types simultaneously."></i>
+                                        </label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sentiment-analysis" checked>
+                                            <label class="form-check-label" for="sentiment-analysis">
+                                                Sentiment Analysis
+                                                <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                   title="Analyzes the emotional tone of text data to determine if it's positive, negative, or neutral."></i>
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="trend-detection" checked>
+                                            <label class="form-check-label" for="trend-detection">
+                                                Trend Detection
+                                                <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                   title="Identifies emerging patterns, topics, and keywords that are gaining popularity over time."></i>
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="user-engagement">
+                                            <label class="form-check-label" for="user-engagement">
+                                                User Engagement Analysis
+                                                <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                   title="Measures how users interact with content through metrics like likes, shares, comments, and retweets."></i>
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="topic-modeling">
+                                            <label class="form-check-label" for="topic-modeling">
+                                                Topic Modeling
+                                                <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                                   title="Uses machine learning to discover abstract topics within a collection of documents or text data."></i>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="processing-mode" class="form-label">
+                                            Processing Mode
+                                            <i class="fas fa-info-circle info-icon" id="processing-mode-info-icon"></i>
+                                        </label>
+                                        <select class="form-select" id="processing-mode">
+                                            <option value="batch">Batch Processing (MapReduce)</option>
+                                            <option value="streaming">Real-time Streaming (Spark)</option>
+                                            <option value="hybrid">Hybrid (MapReduce + Spark)</option>
+                                        </select>
+                                        <div class="processing-mode-info" id="processing-mode-info">
+                                            <h6>Processing Mode Comparison</h6>
+                                            <div class="processing-mode-comparison">
+                                                <table class="table table-sm table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Mode</th>
+                                                            <th>Technology</th>
+                                                            <th>Best For</th>
+                                                            <th>Latency</th>
+                                                            <th>Throughput</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td><strong>Batch</strong></td>
+                                                            <td>Hadoop MapReduce</td>
+                                                            <td>Historical data analysis, complex aggregations</td>
+                                                            <td>High (minutes to hours)</td>
+                                                            <td>Very high</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><strong>Streaming</strong></td>
+                                                            <td>Spark Streaming</td>
+                                                            <td>Real-time analytics, monitoring, alerts</td>
+                                                            <td>Low (seconds)</td>
+                                                            <td>Medium</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><strong>Hybrid</strong></td>
+                                                            <td>MapReduce + Spark</td>
+                                                            <td>Complex workflows with both historical and real-time components</td>
+                                                            <td>Mixed</td>
+                                                            <td>High</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <p><strong>Batch Processing (MapReduce):</strong> Processes large volumes of data in chunks. Ideal for historical data analysis where results are not needed immediately.</p>
+                                            <p><strong>Real-time Streaming (Spark):</strong> Processes data as it arrives. Ideal for applications requiring immediate insights or alerts.</p>
+                                            <p><strong>Hybrid (MapReduce + Spark):</strong> Combines both approaches, using MapReduce for heavy historical processing and Spark for real-time components.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hadoop Settings Tab -->
+                        <div class="tab-pane fade" id="hadoop" role="tabpanel" aria-labelledby="hadoop-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="mapreduce-job" class="form-label">
+                                            MapReduce Job Type
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Select the type of MapReduce job to run. Each job type is optimized for different kinds of analysis."></i>
+                                        </label>
+                                        <select class="form-select" id="mapreduce-job">
+                                            <option value="wordcount">Word Count</option>
+                                            <option value="sentiment">Sentiment Analysis</option>
+                                            <option value="engagement">Engagement Metrics</option>
+                                            <option value="custom">Custom Job</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="input-format" class="form-label">
+                                            Input Format
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Specify the format of the input data. This determines how Hadoop will parse and process the files."></i>
+                                        </label>
+                                        <select class="form-select" id="input-format">
+                                            <option value="text">Text Files</option>
+                                            <option value="sequence">Sequence Files</option>
+                                            <option value="avro">Avro</option>
+                                            <option value="parquet">Parquet</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="num-reducers" class="form-label">
+                                            Number of Reducers
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Set the number of reducer tasks. More reducers can improve parallelism but may increase overhead."></i>
+                                        </label>
+                                        <input type="number" class="form-control" id="num-reducers" value="5">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="hdfs-output" class="form-label">
+                                            HDFS Output Path
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Specify where to save the results in HDFS. This should be a directory path that doesn't already exist."></i>
+                                        </label>
+                                        <input type="text" class="form-control" id="hdfs-output" placeholder="/user/output/analysis">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Spark Settings Tab -->
+                        <div class="tab-pane fade" id="spark" role="tabpanel" aria-labelledby="spark-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="spark-master" class="form-label">
+                                            Spark Master
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Specify the Spark master URL. Use 'local[*]' for local mode, 'yarn' for YARN cluster, or a specific Spark master URL."></i>
+                                        </label>
+                                        <input type="text" class="form-control" id="spark-master" value="local[*]">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="executor-memory" class="form-label">
+                                            Executor Memory
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Amount of memory to allocate to each Spark executor. Format: '1g' for 1 gigabyte, '512m' for 512 megabytes."></i>
+                                        </label>
+                                        <input type="text" class="form-control" id="executor-memory" value="2g">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="executor-cores" class="form-label">
+                                            Executor Cores
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Number of CPU cores to allocate to each Spark executor. Higher values increase parallelism within each executor."></i>
+                                        </label>
+                                        <input type="number" class="form-control" id="executor-cores" value="2">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="streaming-interval" class="form-label">
+                                            Streaming Interval (seconds)
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="For streaming mode, this defines how often Spark processes incoming data batches. Lower values mean more real-time but higher overhead."></i>
+                                        </label>
+                                        <input type="number" class="form-control" id="streaming-interval" value="10">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="window-duration" class="form-label">
+                                            Window Duration (seconds)
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="For windowed operations, this defines the time window for aggregations. Must be a multiple of the streaming interval."></i>
+                                        </label>
+                                        <input type="number" class="form-control" id="window-duration" value="60">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="checkpoint-dir" class="form-label">
+                                            Checkpoint Directory
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Directory for Spark to save checkpoint information for streaming recovery. Required for stateful operations."></i>
+                                        </label>
+                                        <input type="text" class="form-control" id="checkpoint-dir" placeholder="/tmp/spark-checkpoint">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Advanced Settings Tab -->
+                        <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="sample-size" class="form-label">
+                                            Sample Size (0 for all data)
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Limit analysis to a random sample of the data. Use 0 to process all available data. Useful for testing or when working with very large datasets."></i>
+                                        </label>
+                                        <input type="number" class="form-control" id="sample-size" value="0">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="num-partitions" class="form-label">
+                                            Number of Partitions
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Number of partitions to divide the data into. More partitions can improve parallelism but too many can cause overhead."></i>
+                                        </label>
+                                        <input type="number" class="form-control" id="num-partitions" value="10">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="cache-level" class="form-label">
+                                            Cache Level
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Determines how Spark caches intermediate data. Memory caching is faster but requires sufficient RAM. Disk caching is slower but more reliable for large datasets."></i>
+                                        </label>
+                                        <select class="form-select" id="cache-level">
+                                            <option value="none">None</option>
+                                            <option value="memory">Memory Only</option>
+                                            <option value="disk">Disk Only</option>
+                                            <option value="both" selected>Memory and Disk</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="shuffle-partitions" class="form-label">
+                                            Shuffle Partitions
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Number of partitions to use when shuffling data for joins and aggregations. Higher values can help with large datasets but increase overhead."></i>
+                                        </label>
+                                        <input type="number" class="form-control" id="shuffle-partitions" value="200">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="custom-config" class="form-label">
+                                            Custom Configuration (JSON)
+                                            <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                               title="Advanced Spark or Hadoop configuration parameters in JSON format. These will override default settings."></i>
+                                        </label>
+                                        <textarea class="form-control" id="custom-config" rows="3" placeholder='{"spark.sql.shuffle.partitions": 100, "spark.executor.extraJavaOptions": "-XX:+UseG1GC"}'></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Status and Results -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card analysis-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Analysis Status and Results</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Run Analysis Button Row -->
+                            <div class="row mb-3">
+                                <div class="col-12 d-flex justify-content-between">
+                                    <div>
+                                        <button class="btn btn-primary" id="run-analysis-btn">
+                                            <i class="fas fa-play-circle"></i> Run Analysis
+                                        </button>
+                                        <button class="btn btn-danger" id="stop-analysis-btn" disabled>
+                                            <i class="fas fa-stop-circle"></i> Stop Analysis
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-outline-secondary" id="save-config-btn">
+                                            <i class="fas fa-save"></i> Save Configuration
+                                        </button>
+                                        <button class="btn btn-outline-secondary" id="load-config-btn">
+                                            <i class="fas fa-folder-open"></i> Load Configuration
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info" id="analysis-status">
+                                Select parameters and click "Run Analysis" to begin
+                            </div>
+                            <div class="progress mb-4" style="display: none;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            
+                            <!-- Metrics Row -->
+                            <div class="row" id="metrics-row" style="display: none;">
+                                <div class="col-md-3">
+                                    <div class="metric-card bg-light">
+                                        <div class="metric-value" id="records-processed">0</div>
+                                        <div class="metric-label">Records Processed</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card bg-light">
+                                        <div class="metric-value" id="processing-time">0s</div>
+                                        <div class="metric-label">Processing Time</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card bg-light">
+                                        <div class="metric-value" id="trends-found">0</div>
+                                        <div class="metric-label">Trends Identified</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card bg-light">
+                                        <div class="metric-value" id="sentiment-ratio">N/A</div>
+                                        <div class="metric-label">Positive/Negative Ratio</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Real-time Chart -->
+                            <div class="row mt-4" id="chart-row" style="display: none;">
+                                <div class="col-12">
+                                    <h5>Real-time Processing Metrics</h5>
+                                    <canvas id="real-time-chart"></canvas>
+                                </div>
+                            </div>
+                            
+                            <!-- Log Output -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h5>Log Output</h5>
+                                    <div class="card">
+                                        <div class="card-body bg-dark text-light">
+                                            <pre id="log-output" style="height: 200px; overflow-y: auto;">Waiting for analysis to start...</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -156,10 +795,23 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script>
-    // Initialize date range picker
     $(document).ready(function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                html: true,
+                container: 'body'
+            })
+        })
+        
+        // Initialize date range picker
         $('#date-range').daterangepicker({
             startDate: moment().subtract(7, 'days'),
             endDate: moment(),
@@ -170,8 +822,901 @@
                 'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
             }
         });
-    });
+        
+        // Load available datasets on page load
+        loadAvailableDatasets();
+        
+        // Toggle processing mode info
+        $('#processing-mode-info-icon').click(function() {
+            $('#processing-mode-info').slideToggle();
+        });
+        
+        // Dataset card selection
+        $('.select-dataset-type-btn').click(function() {
+            const card = $(this).closest('.dataset-card');
+            const datasetType = card.data('dataset-type');
+            
+            // Update visual selection
+            $('.dataset-card').removeClass('border-primary bg-light');
+            card.addClass('border-primary bg-light');
+            
+            // Hide all dataset containers
+            $('#preloaded-dataset-container, #custom-dataset-container, #dataset-search-container, #dataset-scrape-container').hide();
+            
+            // Show the appropriate container based on selection
+            if (datasetType === 'preloaded') {
+                $('#preloaded-dataset-container').show();
+                $('#dataset').val(''); // Clear the hidden select
+            } else if (datasetType === 'custom') {
+                $('#custom-dataset-container').show();
+                $('#dataset').val('custom');
+            } else if (datasetType === 'search') {
+                $('#dataset-search-container').show();
+                $('#dataset').val('search');
+            } else if (datasetType === 'scrape') {
+                $('#dataset-scrape-container').show();
+                $('#dataset').val('scrape');
+            }
+        });
+        
+        // Preloaded dataset selection
+        $('.select-dataset-btn').click(function() {
+            const filePath = $(this).data('path');
+            const datasetType = $(this).data('type');
+            const datasetTitle = $(this).closest('.list-group-item').find('h6').text();
+            
+            // Update dataset selection
+            $('#dataset').val(datasetType);
+            
+            // Show dataset info with loading indicator
+            $('#preloaded-dataset-info').show();
+            $('.dataset-size, .dataset-records, .dataset-format, .dataset-updated, .dataset-description').text('Loading...');
+            
+            // Fetch dataset information
+            fetchDatasetInfo(datasetType, datasetTitle);
+            
+            // Highlight the selected dataset
+            $('.list-group-item').removeClass('active bg-light');
+            $(this).closest('.list-group-item').addClass('active bg-light');
+            
+            // Update the dataset info title
+            $('.dataset-info-title').text(datasetTitle + ' Information');
+        });
+        
+        // Function to fetch dataset information
+        function fetchDatasetInfo(datasetId, datasetTitle) {
+            // This would be an AJAX call in a real implementation
+            // For now, we'll use mock data
+            const datasetInfo = {
+                'twitter': {
+                    size: '250 MB',
+                    records: '10,000',
+                    format: 'JSON',
+                    updated: '2023-05-15',
+                    description: 'A collection of tweets related to climate change from verified accounts. Includes text, hashtags, user information, and engagement metrics.'
+                },
+                'reddit': {
+                    size: '320 MB',
+                    records: '15,000',
+                    format: 'JSON',
+                    updated: '2023-06-22',
+                    description: 'Comments and posts from technology-related subreddits including r/programming, r/datascience, and r/machinelearning.'
+                },
+                'yelp': {
+                    size: '180 MB',
+                    records: '8,000',
+                    format: 'CSV',
+                    updated: '2023-04-10',
+                    description: 'Restaurant reviews from major US cities, including star ratings, review text, and business categories.'
+                },
+                'amazon': {
+                    size: '275 MB',
+                    records: '12,000',
+                    format: 'CSV',
+                    updated: '2023-07-05',
+                    description: 'Product reviews for electronics and home goods, including ratings, review text, and product metadata.'
+                }
+            };
+            
+            // Update the info panel with dataset details
+            if (datasetInfo[datasetId]) {
+                const info = datasetInfo[datasetId];
+                $('.dataset-size').text(info.size);
+                $('.dataset-records').text(info.records);
+                $('.dataset-format').text(info.format);
+                $('.dataset-updated').text(info.updated);
+                $('.dataset-description').text(info.description);
+            }
+        }
+        
+        // Browse button for custom dataset
+        $('#browse-dataset-btn').click(function() {
+            // In a real implementation, this would open a file browser dialog
+            // For now, we'll show a modal with sample paths
+            
+            // Create a simple modal for demonstration
+            const modal = $(`
+                <div class="modal fade" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Browse HDFS</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="list-group">
+                                    <button type="button" class="list-group-item list-group-item-action" data-path="/user/data/twitter_data.csv">
+                                        <i class="fas fa-file-csv me-2"></i>/user/data/twitter_data.csv
+                                    </button>
+                                    <button type="button" class="list-group-item list-group-item-action" data-path="/user/data/reddit_comments.json">
+                                        <i class="fas fa-file-code me-2"></i>/user/data/reddit_comments.json
+                                    </button>
+                                    <button type="button" class="list-group-item list-group-item-action" data-path="/user/data/yelp_reviews.parquet">
+                                        <i class="fas fa-file me-2"></i>/user/data/yelp_reviews.parquet
+                                    </button>
+                                    <button type="button" class="list-group-item list-group-item-action" data-path="/user/data/amazon_reviews.csv">
+                                        <i class="fas fa-file-csv me-2"></i>/user/data/amazon_reviews.csv
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            
+            // Add click handler for file selection
+            modal.find('.list-group-item').click(function() {
+                const path = $(this).data('path');
+                $('#custom-dataset-path').val(path);
+                
+                // Auto-select format based on file extension
+                const extension = path.split('.').pop().toLowerCase();
+                if (['csv', 'json', 'parquet', 'avro', 'text'].includes(extension)) {
+                    $('#custom-dataset-format').val(extension);
+                }
+                
+                modal.modal('hide');
+            });
+            
+            // Show the modal
+            $('body').append(modal);
+            const modalInstance = new bootstrap.Modal(modal);
+            modalInstance.show();
+            
+            // Clean up when the modal is hidden
+            modal.on('hidden.bs.modal', function() {
+                modal.remove();
+            });
+        });
+        
+        // Show appropriate container based on dataset selection
+        $('#dataset').change(function() {
+            const selectedValue = $(this).val();
+            
+            // Hide all containers first
+            $('#custom-dataset-container').hide();
+            $('#dataset-search-container').hide();
+            $('#dataset-scrape-container').hide();
+            
+            // Show the appropriate container
+            if (selectedValue === 'custom') {
+                $('#custom-dataset-container').show();
+            } else if (selectedValue === 'search') {
+                $('#dataset-search-container').show();
+            } else if (selectedValue === 'scrape') {
+                $('#dataset-scrape-container').show();
+            }
+        });
+        
+        // Toggle scraping options based on source
+        $('#scrape-source').change(function() {
+            const selectedValue = $(this).val();
+            
+            if (selectedValue === 'twitter') {
+                $('#twitter-scrape-options').show();
+                $('#reddit-scrape-options').hide();
+            } else if (selectedValue === 'reddit') {
+                $('#twitter-scrape-options').hide();
+                $('#reddit-scrape-options').show();
+            }
+        });
+        
+        // Stop analysis button click handler
+        $('#stop-analysis-btn').click(function() {
+            // Update status
+            $('#analysis-status').removeClass('alert-warning alert-success')
+                .addClass('alert-danger')
+                .text('Analysis stopped by user');
+            
+            // Add log message
+            $('#log-output').append('Analysis stopped by user.\n');
+            
+            // Re-enable run button, disable stop button
+            $('#run-analysis-btn').prop('disabled', false);
+            $('#stop-analysis-btn').prop('disabled', true);
+            
+            // Make AJAX call to stop analysis
+            $.ajax({
+                url: '/api/stop-analysis',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ stop: true }),
+                error: function(xhr, status, error) {
+                    console.error('Error stopping analysis:', error);
+                }
+            });
+        });
+        
+        function handleError(message) {
+            // Update status
+            $('#analysis-status').removeClass('alert-warning alert-success')
+                .addClass('alert-danger')
+                .text('Analysis failed: ' + message);
+            
+            // Add log message
+            $('#log-output').append('ERROR: ' + message + '\n');
+            
+            // Scroll log to bottom
+            const logOutput = document.getElementById('log-output');
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+        
+        function initializeChart() {
+            const ctx = document.getElementById('real-time-chart').getContext('2d');
+            
+            // Generate some dummy data
+            const labels = Array.from({length: 10}, (_, i) => `T-${10-i}`);
+            const data = Array.from({length: 10}, () => Math.floor(Math.random() * 100));
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Processing Rate (records/sec)',
+                        data: data,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Save configuration button
+        $('#save-config-btn').click(function() {
+            const config = {
+                dataset: $('#dataset').val(),
+                customDatasetPath: $('#custom-dataset-path').val(),
+                dateRange: $('#date-range').val(),
+                // ... collect all other settings
+            };
+            
+            // Convert to JSON string
+            const configStr = JSON.stringify(config, null, 2);
+            
+            // Create a download link
+            const blob = new Blob([configStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'analysis-config.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+        
+        // Load configuration button - trigger file input
+        $('#load-config-btn').click(function() {
+            // Create a file input element
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.json';
+            fileInput.style.display = 'none';
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const config = JSON.parse(e.target.result);
+                            
+                            // Apply configuration to form
+                            $('#dataset').val(config.dataset);
+                            $('#custom-dataset-path').val(config.customDatasetPath);
+                            $('#date-range').val(config.dateRange);
+                            // ... apply all other settings
+                            
+                            // Show success message
+                            alert('Configuration loaded successfully');
+                        } catch (error) {
+                            alert('Error loading configuration: ' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            });
+            
+            document.body.appendChild(fileInput);
+            fileInput.click();
+            document.body.removeChild(fileInput);
+        });
 
-    // TODO: Implement form validation and analysis execution
+        // Run analysis button click handler
+        $('#run-analysis-btn').click(function() {
+            // Validate form
+            let isValid = true;
+            let errorMessage = '';
+            
+            // Check if dataset is selected
+            const datasetValue = $('#dataset').val();
+            if (!datasetValue) {
+                isValid = false;
+                errorMessage = 'Please select a dataset';
+            } else if (datasetValue === 'custom' && !$('#custom-dataset-path').val()) {
+                isValid = false;
+                errorMessage = 'Please enter a custom dataset path';
+            } else if (datasetValue === 'search') {
+                isValid = false;
+                errorMessage = 'Please select a dataset from search results';
+            } else if (datasetValue === 'scrape') {
+                isValid = false;
+                errorMessage = 'Please scrape data first';
+            }
+            
+            if (!isValid) {
+                handleError(errorMessage);
+                return;
+            }
+            
+            // Check if previous analysis exists
+            const checkForPreviousAnalysis = function() {
+                // In a real implementation, this would be an AJAX call to check if previous analysis exists
+                // For now, we'll simulate with a random check
+                return Math.random() > 0.5;
+            };
+            
+            // Get dataset name for file naming
+            const getDatasetName = function() {
+                if (datasetValue === 'custom') {
+                    const path = $('#custom-dataset-path').val();
+                    return path.split('/').pop().split('.')[0];
+                }
+                
+                // For preloaded datasets, get the selected dataset name
+                const selectedDataset = $('.list-group-item.active h6').text();
+                if (selectedDataset) {
+                    return selectedDataset.replace(/\s+/g, '_').toLowerCase();
+                }
+                
+                return datasetValue;
+            };
+            
+            // Get analysis types for file naming
+            const getAnalysisTypes = function() {
+                const types = [];
+                if ($('#sentiment-analysis').is(':checked')) types.push('sentiment');
+                if ($('#trend-detection').is(':checked')) types.push('trend');
+                if ($('#user-engagement').is(':checked')) types.push('engagement');
+                if ($('#topic-modeling').is(':checked')) types.push('topic');
+                return types.join('_');
+            };
+            
+            // Get date range for file naming
+            const getDateRange = function() {
+                const dateRange = $('#date-range').val();
+                return dateRange.replace(/\//g, '-').replace(/\s+/g, '_');
+            };
+            
+            // Generate output filename
+            const outputFilename = getDatasetName() + '_' + getAnalysisTypes() + '_' + getDateRange();
+            
+            // Check for previous analysis and confirm if needed
+            if (checkForPreviousAnalysis()) {
+                if (!confirm(`A previous analysis exists. Running a new analysis will replace the existing visualizations and save results to "${outputFilename}". Do you want to continue?`)) {
+                    return;
+                }
+            }
+            
+            // Disable run button, enable stop button
+            $('#run-analysis-btn').prop('disabled', true);
+            $('#stop-analysis-btn').prop('disabled', false);
+            
+            // Update status
+            $('#analysis-status').removeClass('alert-danger alert-success')
+                .addClass('alert-warning')
+                .text('Analysis in progress...');
+            
+            // Show progress bar
+            $('.progress').show();
+            
+            // Clear log
+            $('#log-output').text('');
+            
+            // Add initial log messages
+            $('#log-output').append('Starting analysis...\n');
+            $('#log-output').append(`Output will be saved as: ${outputFilename}\n`);
+            $('#log-output').append('Configuring job parameters...\n');
+            
+            // Collect all form parameters
+            const params = {
+                dataset: datasetValue,
+                dateRange: $('#date-range').val(),
+                outputFilename: outputFilename,
+                analysisTypes: {
+                    sentiment: $('#sentiment-analysis').is(':checked'),
+                    trend: $('#trend-detection').is(':checked'),
+                    engagement: $('#user-engagement').is(':checked'),
+                    topic: $('#topic-modeling').is(':checked')
+                },
+                processingMode: $('#processing-mode').val()
+            };
+            
+            // Add custom dataset path if applicable
+            if (datasetValue === 'custom') {
+                params.customDatasetPath = $('#custom-dataset-path').val();
+                params.customDatasetFormat = $('#custom-dataset-format').val();
+            }
+            
+            // Add Hadoop settings if applicable
+            if (params.processingMode === 'batch' || params.processingMode === 'hybrid') {
+                params.hadoop = {
+                    mapReduceJob: $('#mapreduce-job').val(),
+                    inputFormat: $('#input-format').val(),
+                    numReducers: $('#num-reducers').val(),
+                    hdfsOutput: $('#hdfs-output').val()
+                };
+            }
+            
+            // Add Spark settings if applicable
+            if (params.processingMode === 'streaming' || params.processingMode === 'hybrid') {
+                params.spark = {
+                    master: $('#spark-master').val(),
+                    executorMemory: $('#executor-memory').val(),
+                    executorCores: $('#executor-cores').val(),
+                    streamingInterval: $('#streaming-interval').val(),
+                    windowDuration: $('#window-duration').val(),
+                    checkpointDir: $('#checkpoint-dir').val()
+                };
+            }
+            
+            // Add advanced settings
+            params.advanced = {
+                sampleSize: $('#sample-size').val(),
+                numPartitions: $('#num-partitions').val(),
+                cacheLevel: $('#cache-level').val(),
+                shufflePartitions: $('#shuffle-partitions').val(),
+                customConfig: $('#custom-config').val()
+            };
+            
+            // Log parameters
+            $('#log-output').append('Job parameters configured.\n');
+            $('#log-output').append('Dataset: ' + params.dataset + '\n');
+            $('#log-output').append('Processing mode: ' + params.processingMode + '\n');
+            $('#log-output').append('Analysis types: ' + Object.keys(params.analysisTypes).filter(key => params.analysisTypes[key]).join(', ') + '\n');
+            $('#log-output').append('Submitting job to cluster...\n');
+            
+            // Simulate progress updates
+            let progress = 0;
+            const progressInterval = setInterval(function() {
+                progress += Math.floor(Math.random() * 5) + 1;
+                if (progress > 100) progress = 100;
+                
+                $('.progress-bar').css('width', progress + '%');
+                
+                if (progress === 100) {
+                    clearInterval(progressInterval);
+                    
+                    // Update status
+                    $('#analysis-status').removeClass('alert-warning alert-danger')
+                        .addClass('alert-success')
+                        .text('Analysis completed successfully');
+                    
+                    // Add final log message
+                    $('#log-output').append('Analysis completed successfully.\n');
+                    $('#log-output').append('Results saved to output location.\n');
+                    
+                    // Show metrics and chart
+                    $('#metrics-row').show();
+                    $('#chart-row').show();
+                    
+                    // Update metrics with random values
+                    $('#records-processed').text(Math.floor(Math.random() * 100000) + 10000);
+                    $('#processing-time').text(Math.floor(Math.random() * 120) + 30 + 's');
+                    $('#trends-found').text(Math.floor(Math.random() * 50) + 5);
+                    $('#sentiment-ratio').text((Math.random() * 2 + 0.5).toFixed(2));
+                    
+                    // Initialize chart
+                    initializeChart();
+                    
+                    // Re-enable run button, disable stop button
+                    $('#run-analysis-btn').prop('disabled', false);
+                    $('#stop-analysis-btn').prop('disabled', true);
+                }
+            }, 500);
+            
+            // Make AJAX call to start analysis
+            $.ajax({
+                url: '/api/run-analysis',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function(response) {
+                    // This would handle the real response from the server
+                    console.log('Analysis job submitted:', response);
+                },
+                error: function(xhr, status, error) {
+                    clearInterval(progressInterval);
+                    
+                    // Handle error
+                    console.error('Error submitting analysis job:', error);
+                    handleError('Failed to submit analysis job: ' + error);
+                    
+                    // Re-enable run button, disable stop button
+                    $('#run-analysis-btn').prop('disabled', false);
+                    $('#stop-analysis-btn').prop('disabled', true);
+                }
+            });
+        });
+
+        // Function to load available datasets
+        function loadAvailableDatasets() {
+            $('#available-datasets-list').html('<div class="list-group-item text-center py-3"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div> Loading datasets...</div>');
+            
+            // Simulate AJAX call with mock data
+            setTimeout(function() {
+                const mockDatasets = [
+                    {
+                        title: 'Twitter Climate Change Data',
+                        size: '250 MB',
+                        records: '10,000',
+                        format: 'JSON',
+                        file_path: '/user/data/twitter_climate_change.json',
+                        type: 'twitter'
+                    },
+                    {
+                        title: 'Reddit Technology Comments',
+                        size: '320 MB',
+                        records: '15,000',
+                        format: 'JSON',
+                        file_path: '/user/data/reddit_technology.json',
+                        type: 'reddit'
+                    },
+                    {
+                        title: 'Yelp Restaurant Reviews',
+                        size: '180 MB',
+                        records: '8,000',
+                        format: 'CSV',
+                        file_path: '/user/data/yelp_restaurants.csv',
+                        type: 'yelp'
+                    },
+                    {
+                        title: 'Amazon Electronics Reviews',
+                        size: '275 MB',
+                        records: '12,000',
+                        format: 'CSV',
+                        file_path: '/user/data/amazon_electronics.csv',
+                        type: 'amazon'
+                    },
+                    {
+                        title: 'Twitter COVID-19 Tweets',
+                        size: '150 MB',
+                        records: '7,500',
+                        format: 'JSON',
+                        file_path: '/user/data/twitter_covid19.json',
+                        type: 'twitter'
+                    }
+                ];
+                
+                if (mockDatasets.length === 0) {
+                    $('#available-datasets-list').html('<div class="list-group-item text-center text-muted py-3">No datasets available</div>');
+                    return;
+                }
+                
+                let html = '';
+                mockDatasets.forEach(function(dataset) {
+                    html += `
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${dataset.title}</h6>
+                                <small>${dataset.size}</small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">${dataset.records} records • ${dataset.format}</small>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary select-dataset-btn" data-path="${dataset.file_path}" data-type="${dataset.type}">
+                                        <i class="fas fa-check"></i> Select
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                $('#available-datasets-list').html(html);
+                
+                // Add click handler for select buttons
+                $('.select-dataset-btn').click(function() {
+                    const filePath = $(this).data('path');
+                    const datasetType = $(this).data('type');
+                    const datasetTitle = $(this).closest('.list-group-item').find('h6').text();
+                    
+                    // Update dataset selection
+                    $('#dataset').val(datasetType);
+                    
+                    // Show dataset info with loading indicator
+                    $('#preloaded-dataset-info').show();
+                    $('.dataset-size, .dataset-records, .dataset-format, .dataset-updated, .dataset-description').text('Loading...');
+                    
+                    // Fetch dataset information
+                    fetchDatasetInfo(datasetType, datasetTitle);
+                    
+                    // Highlight the selected dataset
+                    $('.list-group-item').removeClass('active bg-light');
+                    $(this).closest('.list-group-item').addClass('active bg-light');
+                    
+                    // Update the dataset info title
+                    $('.dataset-info-title').text(datasetTitle + ' Information');
+                });
+            }, 1000);
+        }
+
+        // Dataset search button click handler
+        $('#dataset-search-btn').click(function() {
+            const searchQuery = $('#dataset-search-query').val();
+            const searchSource = $('#dataset-search-source').val();
+            
+            if (!searchQuery) {
+                $('#dataset-search-results').html('<div class="list-group-item text-center text-danger py-3">Please enter search terms</div>');
+                return;
+            }
+            
+            // Show loading indicator
+            $('#dataset-search-results').html('<div class="list-group-item text-center py-3"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div> Searching...</div>');
+            
+            // Simulate search with mock data
+            setTimeout(function() {
+                // Mock search results
+                const mockResults = [
+                    {
+                        title: 'Twitter Climate Change Dataset',
+                        description: 'A collection of tweets related to climate change from verified accounts.',
+                        source: 'twitter',
+                        size: '250 MB',
+                        records: '10,000',
+                        format: 'JSON',
+                        updated: '2023-05-15',
+                        url: 'https://example.com/datasets/twitter_climate_change'
+                    },
+                    {
+                        title: 'Reddit Technology Comments',
+                        description: 'Comments from technology-related subreddits including r/programming and r/datascience.',
+                        source: 'reddit',
+                        size: '320 MB',
+                        records: '15,000',
+                        format: 'JSON',
+                        updated: '2023-06-22',
+                        url: 'https://example.com/datasets/reddit_technology'
+                    },
+                    {
+                        title: 'Social Media Sentiment Analysis Dataset',
+                        description: 'Combined dataset from Twitter and Reddit with sentiment annotations.',
+                        source: 'kaggle',
+                        size: '500 MB',
+                        records: '25,000',
+                        format: 'CSV',
+                        updated: '2023-04-10',
+                        url: 'https://example.com/datasets/sentiment_analysis'
+                    }
+                ];
+                
+                // Filter by source if needed
+                const filteredResults = searchSource === 'all' 
+                    ? mockResults 
+                    : mockResults.filter(result => result.source === searchSource);
+                
+                if (filteredResults.length === 0) {
+                    $('#dataset-search-results').html('<div class="list-group-item text-center text-muted py-3">No datasets found matching your search</div>');
+                    return;
+                }
+                
+                let html = '';
+                filteredResults.forEach(function(result) {
+                    html += `
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${result.title}</h6>
+                                <small class="text-${result.source === 'twitter' ? 'info' : (result.source === 'reddit' ? 'danger' : 'success')}">${result.source}</small>
+                            </div>
+                            <p class="mb-1 small">${result.description}</p>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <small class="text-muted">${result.size} • ${result.records} records • ${result.format} • Updated: ${result.updated}</small>
+                                <button class="btn btn-sm btn-primary download-dataset-btn" data-url="${result.url}" data-title="${result.title}">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                $('#dataset-search-results').html(html);
+                
+                // Add click handler for download buttons
+                $('.download-dataset-btn').click(function() {
+                    const datasetUrl = $(this).data('url');
+                    const datasetTitle = $(this).data('title');
+                    
+                    // Disable button and show loading
+                    $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Downloading...');
+                    
+                    // Simulate download
+                    setTimeout(() => {
+                        // Update button
+                        $(this).html('<i class="fas fa-check"></i> Downloaded');
+                        
+                        // Add to available datasets
+                        loadAvailableDatasets();
+                        
+                        // Show success message
+                        alert(`Dataset "${datasetTitle}" has been downloaded successfully and is now available in your workspace.`);
+                    }, 2000);
+                });
+            }, 1500);
+        });
+
+        // Twitter scrape button click handler
+        $('#twitter-scrape-btn').click(function() {
+            const query = $('#twitter-query').val();
+            const limit = $('#twitter-limit').val();
+            
+            if (!query) {
+                alert('Please enter a search query for Twitter');
+                return;
+            }
+            
+            // Disable button
+            $(this).prop('disabled', true);
+            
+            // Show scraping status
+            $('#scrape-status-container').show();
+            $('#scrape-status').text(`Scraping Twitter data for "${query}"...`);
+            $('.progress-bar').css('width', '0%');
+            
+            // Simulate scraping with progress updates
+            let progress = 0;
+            const progressInterval = setInterval(function() {
+                progress += Math.floor(Math.random() * 10) + 1;
+                if (progress > 100) progress = 100;
+                
+                $('.progress-bar').css('width', progress + '%');
+                
+                if (progress === 100) {
+                    clearInterval(progressInterval);
+                    
+                    // Update status
+                    $('#scrape-status').removeClass('alert-info').addClass('alert-success')
+                        .html(`<i class="fas fa-check-circle"></i> Successfully scraped ${limit} tweets for "${query}"`);
+                    
+                    // Re-enable button
+                    $('#twitter-scrape-btn').prop('disabled', false);
+                    
+                    // Add to available datasets
+                    loadAvailableDatasets();
+                    
+                    // After 3 seconds, hide the status
+                    setTimeout(function() {
+                        $('#scrape-status-container').fadeOut();
+                    }, 3000);
+                }
+            }, 300);
+            
+            // Simulate AJAX call
+            $.ajax({
+                url: '/api/scrape-twitter',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    query: query,
+                    limit: limit
+                }),
+                success: function(response) {
+                    // This would handle the real response from the server
+                    console.log('Twitter scraping job submitted:', response);
+                },
+                error: function(xhr, status, error) {
+                    clearInterval(progressInterval);
+                    
+                    // Update status
+                    $('#scrape-status').removeClass('alert-info').addClass('alert-danger')
+                        .html(`<i class="fas fa-exclamation-circle"></i> Error: ${error}`);
+                    
+                    // Re-enable button
+                    $('#twitter-scrape-btn').prop('disabled', false);
+                }
+            });
+        });
+
+        // Reddit scrape button click handler
+        $('#reddit-scrape-btn').click(function() {
+            const subreddit = $('#reddit-subreddit').val();
+            const limit = $('#reddit-limit').val();
+            
+            if (!subreddit) {
+                alert('Please enter a subreddit name');
+                return;
+            }
+            
+            // Disable button
+            $(this).prop('disabled', true);
+            
+            // Show scraping status
+            $('#scrape-status-container').show();
+            $('#scrape-status').text(`Scraping data from r/${subreddit}...`);
+            $('.progress-bar').css('width', '0%');
+            
+            // Simulate scraping with progress updates
+            let progress = 0;
+            const progressInterval = setInterval(function() {
+                progress += Math.floor(Math.random() * 8) + 1;
+                if (progress > 100) progress = 100;
+                
+                $('.progress-bar').css('width', progress + '%');
+                
+                if (progress === 100) {
+                    clearInterval(progressInterval);
+                    
+                    // Update status
+                    $('#scrape-status').removeClass('alert-info').addClass('alert-success')
+                        .html(`<i class="fas fa-check-circle"></i> Successfully scraped ${limit} posts from r/${subreddit}`);
+                    
+                    // Re-enable button
+                    $('#reddit-scrape-btn').prop('disabled', false);
+                    
+                    // Add to available datasets
+                    loadAvailableDatasets();
+                    
+                    // After 3 seconds, hide the status
+                    setTimeout(function() {
+                        $('#scrape-status-container').fadeOut();
+                    }, 3000);
+                }
+            }, 400);
+            
+            // Simulate AJAX call
+            $.ajax({
+                url: '/api/scrape-reddit',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    subreddit: subreddit,
+                    limit: limit
+                }),
+                success: function(response) {
+                    // This would handle the real response from the server
+                    console.log('Reddit scraping job submitted:', response);
+                },
+                error: function(xhr, status, error) {
+                    clearInterval(progressInterval);
+                    
+                    // Update status
+                    $('#scrape-status').removeClass('alert-info').addClass('alert-danger')
+                        .html(`<i class="fas fa-exclamation-circle"></i> Error: ${error}`);
+                    
+                    // Re-enable button
+                    $('#reddit-scrape-btn').prop('disabled', false);
+                }
+            });
+        });
+    });
 </script>
 {% endblock %} 
