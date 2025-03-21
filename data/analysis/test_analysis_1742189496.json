@@ -1,0 +1,29 @@
+{
+  "dataset": "Test Analysis",
+  "source_file": "test_data.csv",
+  "record_count": 10,
+  "date_range": "2025-03-10 to 2025-03-17",
+  "processing_mode": "batch",
+  "analysis_types": [
+    "sentiment",
+    "trend"
+  ],
+  "created_at": "2025-03-17 13:31:36",
+  "results": {
+    "sentiment_analysis": {
+      "positive_count": 5,
+      "neutral_count": 3,
+      "negative_count": 2
+    },
+    "trend_analysis": {
+      "time_periods": [
+        "2025-03-10",
+        "2025-03-11"
+      ],
+      "mention_counts": [
+        5,
+        5
+      ]
+    }
+  }
+}

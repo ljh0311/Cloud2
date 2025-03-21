@@ -1,0 +1,23 @@
+{
+    "sentiment": {
+        "labels": [
+            "Negative",
+            "Neutral",
+            "Positive"
+        ],
+        "datasets": [
+            {
+                "data": [
+                    0,
+                    0,
+                    0
+                ],
+                "backgroundColor": [
+                    "#ff6b6b",
+                    "#339af0",
+                    "#51cf66"
+                ]
+            }
+        ]
+    }
+}
