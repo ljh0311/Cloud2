@@ -555,53 +555,449 @@ class DatasetService:
             }
     
     def scrape_reddit_data(self, subreddit, limit=100):
-        """Scrape Reddit data from a subreddit (simulated)"""
+        """Scrape Reddit data from a subreddit using the Reddit API"""
         logger.info(f"Scraping Reddit data for subreddit: {subreddit}, limit: {limit}")
         
         try:
-            # In a real implementation, this would use Reddit API or web scraping
-            # For now, we'll simulate the scraping
+            # Import the Reddit scraper module
+            from src.data.reddit_scraper import scrape_reddit_data as reddit_scraper
             
-            # Simulate network delay
-            time.sleep(2)
+            # Call the scraper function
+            result = reddit_scraper(subreddit, limit, self.data_dir + "/reddit")
             
-            # Generate simulated Reddit posts
-            posts = []
-            for i in range(limit):
-                sentiment = random.choice(["positive", "neutral", "negative"])
-                post = {
-                    "id": f"post_{i}_{int(time.time())}",
-                    "title": f"Simulated Reddit post about {subreddit}",
-                    "text": f"This is a simulated Reddit post in r/{subreddit}. Discussing big data analytics and social media trends.",
-                    "timestamp": (datetime.now() - timedelta(hours=random.randint(0, 168))).isoformat(),
-                    "author": f"redditor_{random.randint(1000, 9999)}",
-                    "upvotes": random.randint(0, 5000),
-                    "comments": random.randint(0, 500),
-                    "sentiment": sentiment
-                }
-                posts.append(post)
+            logger.info(f"Scraped {result.get('records', 0)} Reddit posts and saved to {result.get('file_path', 'unknown')}")
             
-            # Save to a file
-            filename = f"reddit_scraped_{subreddit}_{int(time.time())}.csv"
-            file_path = os.path.join(self.data_dir, "reddit", filename)
-            
-            with open(file_path, 'w') as f:
-                f.write("id,title,text,timestamp,author,upvotes,comments,sentiment\n")
-                for post in posts:
-                    f.write(f"{post['id']},{post['title']},{post['text']},{post['timestamp']},{post['author']},{post['upvotes']},{post['comments']},{post['sentiment']}\n")
-            
-            logger.info(f"Scraped {len(posts)} Reddit posts and saved to {file_path}")
-            
-            return {
-                "success": True,
-                "file_path": file_path,
-                "records": len(posts),
-                "message": f"Successfully scraped {len(posts)} posts from r/{subreddit}"
-            }
+            return result
             
         except Exception as e:
             logger.error(f"Error scraping Reddit data: {str(e)}")
             return {
                 "success": False,
                 "message": f"Error scraping Reddit data: {str(e)}"
-            } 
+            }
+
+class AnalysisService:
+    """Service for managing analysis results and visualizations"""
+    
+    def __init__(self):
+        self.spark = SparkService()
+        self.analysis_dir = os.path.join('data', 'analysis')
+        os.makedirs(self.analysis_dir, exist_ok=True)
+
+    def analyze_reddit_data(self, file_path, analysis_types=None):
+        """Analyze Reddit data using Hadoop and Spark"""
+        try:
+            # Initialize Spark session
+            spark = self.spark.get_session()
+
+            # Read JSON data
+            df = spark.read.json(file_path)
+            
+            # Register temp view for SQL queries
+            df.createOrReplaceTempView("reddit_posts")
+
+            results = {}
+
+            # Sentiment Analysis using Spark
+            if 'sentiment' in analysis_types:
+                sentiment_df = spark.sql("""
+                    WITH sentiment_data AS (
+                        SELECT 
+                            id,
+                            created_utc,
+                            sentiment.polarity as sentiment_score
+                        FROM reddit_posts
+                        CROSS JOIN UDTF('textblob', concat(title, ' ', text)) as sentiment
+                    )
+                    SELECT 
+                        CASE 
+                            WHEN sentiment_score > 0.1 THEN 'positive'
+                            WHEN sentiment_score < -0.1 THEN 'negative'
+                            ELSE 'neutral'
+                        END as sentiment,
+                        COUNT(*) as count,
+                        AVG(sentiment_score) as avg_score
+                    FROM sentiment_data
+                    GROUP BY 
+                        CASE 
+                            WHEN sentiment_score > 0.1 THEN 'positive'
+                            WHEN sentiment_score < -0.1 THEN 'negative'
+                            ELSE 'neutral'
+                        END
+                """)
+                results['sentiment_analysis'] = sentiment_df.toPandas().to_dict('records')
+
+            # Trend Analysis using Hadoop MapReduce
+            if 'trend' in analysis_types:
+                # Submit MapReduce job for trend analysis
+                trend_job = self.spark.submit_mapreduce_job(
+                    input_path=file_path,
+                    mapper='trend_mapper.py',
+                    reducer='trend_reducer.py',
+                    output_path='data/mapreduce/trends'
+                )
+                
+                # Load MapReduce results into Spark
+                trend_df = spark.read.parquet('data/mapreduce/trends')
+                results['trend_analysis'] = trend_df.toPandas().to_dict('records')
+
+            # Traffic Incident Analysis using Spark
+            if 'traffic' in analysis_types:
+                traffic_df = spark.sql("""
+                    WITH traffic_data AS (
+                        SELECT 
+                            id,
+                            created_utc,
+                            LOWER(title) as title_lower,
+                            LOWER(text) as text_lower
+                        FROM reddit_posts
+                    )
+                    SELECT 
+                        CASE 
+                            WHEN REGEXP_LIKE(title_lower || ' ' || text_lower, 'accident|crash|collision') THEN 'accident'
+                            WHEN REGEXP_LIKE(title_lower || ' ' || text_lower, 'jam|congestion|heavy traffic') THEN 'traffic_jam'
+                            WHEN REGEXP_LIKE(title_lower || ' ' || text_lower, 'construction|roadwork|maintenance') THEN 'road_work'
+                            WHEN REGEXP_LIKE(title_lower || ' ' || text_lower, 'rain|flood|weather') THEN 'weather'
+                            WHEN REGEXP_LIKE(title_lower || ' ' || text_lower, 'speeding|red light|illegal') THEN 'violation'
+                            ELSE 'other'
+                        END as incident_type,
+                        COUNT(*) as count
+                    FROM traffic_data
+                    GROUP BY 
+                        CASE 
+                            WHEN REGEXP_LIKE(title_lower || ' ' || text_lower, 'accident|crash|collision') THEN 'accident'
+                            WHEN REGEXP_LIKE(title_lower || ' ' || text_lower, 'jam|congestion|heavy traffic') THEN 'traffic_jam'
+                            WHEN REGEXP_LIKE(title_lower || ' ' || text_lower, 'construction|roadwork|maintenance') THEN 'road_work'
+                            WHEN REGEXP_LIKE(title_lower || ' ' || text_lower, 'rain|flood|weather') THEN 'weather'
+                            WHEN REGEXP_LIKE(title_lower || ' ' || text_lower, 'speeding|red light|illegal') THEN 'violation'
+                            ELSE 'other'
+                        END
+                """)
+                results['traffic_analysis'] = traffic_df.toPandas().to_dict('records')
+
+            # Location Analysis using Spark
+            if 'location' in analysis_types:
+                location_df = spark.sql("""
+                    WITH location_data AS (
+                        SELECT 
+                            id,
+                            created_utc,
+                            LOWER(title || ' ' || text) as content
+                        FROM reddit_posts
+                    )
+                    SELECT 
+                        location,
+                        COUNT(*) as mentions
+                    FROM location_data
+                    LATERAL VIEW EXPLODE(ARRAY(
+                        'woodlands', 'tampines', 'jurong', 'changi', 'yishun',
+                        'ang mo kio', 'bedok', 'clementi', 'punggol', 'sengkang',
+                        'pie', 'cte', 'sle', 'bke', 'tpe', 'ecp', 'aye', 'kje'
+                    )) t AS location
+                    WHERE INSTR(content, location) > 0
+                    GROUP BY location
+                    ORDER BY mentions DESC
+                """)
+                results['location_analysis'] = location_df.toPandas().to_dict('records')
+
+            # Topic Modeling using Spark ML
+            if 'topic' in analysis_types:
+                from pyspark.ml.feature import CountVectorizer, IDF
+                from pyspark.ml.clustering import LDA
+                
+                # Prepare text data
+                text_df = spark.sql("""
+                    SELECT id, CONCAT(title, ' ', text) as content
+                    FROM reddit_posts
+                """)
+                
+                # Create document term matrix
+                cv = CountVectorizer(inputCol="content", outputCol="raw_features", vocabSize=1000)
+                cv_model = cv.fit(text_df)
+                vectorized_df = cv_model.transform(text_df)
+                
+                # Apply TF-IDF
+                idf = IDF(inputCol="raw_features", outputCol="features")
+                idf_model = idf.fit(vectorized_df)
+                tfidf_df = idf_model.transform(vectorized_df)
+                
+                # Apply LDA
+                num_topics = 5
+                lda = LDA(k=num_topics, maxIter=10)
+                lda_model = lda.fit(tfidf_df)
+                
+                # Get topics and their terms
+                topics = []
+                topic_indices = lda_model.describeTopics()
+                vocabulary = cv_model.vocabulary
+                
+                for topic in topic_indices:
+                    topic_terms = [vocabulary[idx] for idx in topic.termIndices]
+                    topics.append({
+                        'terms': topic_terms,
+                        'weights': topic.termWeights.tolist()
+                    })
+                
+                results['topic_analysis'] = {
+                    'topics': topics,
+                    'vocabulary': vocabulary
+                }
+
+            # Save results
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            output_file = os.path.join(self.analysis_dir, f'reddit_analysis_{timestamp}.json')
+            
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(results, f, indent=2)
+            
+            return {
+                'success': True,
+                'message': 'Analysis completed successfully',
+                'file_path': output_file
+            }
+
+        except Exception as e:
+            logger.error(f"Error in analyze_reddit_data: {str(e)}")
+            return {
+                'success': False,
+                'message': f'Error analyzing data: {str(e)}'
+            }
+
+    def get_analysis_files(self):
+        """Get a list of available analysis files"""
+        try:
+            # Create the analysis directory if it doesn't exist
+            os.makedirs(self.analysis_dir, exist_ok=True)
+            
+            # Get all JSON files in the analysis directory
+            analysis_files = []
+            for filename in os.listdir(self.analysis_dir):
+                if filename.endswith('.json'):
+                    file_path = os.path.join(self.analysis_dir, filename)
+                    file_stat = os.stat(file_path)
+                    
+                    # Extract dataset name from filename
+                    dataset_name = filename.split('_')[0]
+                    
+                    # Format creation time
+                    created = datetime.fromtimestamp(file_stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                    
+                    analysis_files.append({
+                        "id": filename,  # Use filename as ID
+                        "dataset": dataset_name.capitalize(),
+                        "created": created,
+                        "size": file_stat.st_size,
+                        "path": file_path
+                    })
+            
+            # Sort by creation time, newest first
+            analysis_files.sort(key=lambda x: x['created'], reverse=True)
+            
+            return analysis_files
+            
+        except Exception as e:
+            logger.error(f"Error getting analysis files: {str(e)}")
+            return []
+    
+    def get_visualization_data(self, analysis_id, dataset='all', viz_type='all', timeframe='30d'):
+        """Get visualization data from an analysis file"""
+        try:
+            # Get the full path to the analysis file
+            file_path = os.path.join(self.analysis_dir, analysis_id)
+            
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"Analysis file not found: {analysis_id}")
+            
+            # Read the analysis data
+            with open(file_path, 'r') as f:
+                analysis_data = json.load(f)
+            
+            # Initialize visualizations dictionary
+            visualizations = {}
+            
+            # Get the results data
+            results = analysis_data.get('results', {})
+            
+            if viz_type == 'all' or viz_type == 'sentiment':
+                if 'sentiment_analysis' in results:
+                    sentiment_data = results['sentiment_analysis']
+                    visualizations['sentiment'] = self._format_sentiment_data(sentiment_data)
+            
+            if viz_type == 'all' or viz_type == 'location':
+                if 'location_analysis' in results:
+                    location_data = results['location_analysis']
+                    visualizations['location'] = self._format_location_data(location_data)
+            
+            if viz_type == 'all' or viz_type == 'issues':
+                if 'issues_analysis' in results:
+                    issues_data = results['issues_analysis']
+                    visualizations['issues'] = self._format_issues_data(issues_data)
+            
+            return {
+                "status": "success",
+                "data": visualizations
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting visualization data: {str(e)}")
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+    
+    def _format_sentiment_data(self, sentiment_data):
+        """Format sentiment data for visualization"""
+        return {
+            "labels": ['Positive', 'Neutral', 'Negative'],
+            "datasets": [{
+                "data": [
+                    sentiment_data.get('positive', 0),
+                    sentiment_data.get('neutral', 0),
+                    sentiment_data.get('negative', 0)
+                ],
+                "backgroundColor": ['#4caf50', '#2196f3', '#f44336'],
+                "hoverOffset": 4
+            }]
+        }
+    
+    def _format_location_data(self, location_data):
+        """Format location data for visualization"""
+        # Sort locations by mention count
+        sorted_locations = sorted(
+            location_data.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )[:10]  # Get top 10 locations
+        
+        return {
+            "labels": [loc[0] for loc in sorted_locations],
+            "datasets": [{
+                "data": [loc[1] for loc in sorted_locations],
+                "backgroundColor": 'rgba(54, 162, 235, 0.5)',
+                "borderColor": 'rgb(54, 162, 235)',
+                "borderWidth": 1
+            }]
+        }
+    
+    def _format_issues_data(self, issues_data):
+        """Format common issues data for visualization"""
+        # Sort issues by frequency
+        sorted_issues = sorted(
+            issues_data.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )[:10]  # Get top 10 issues
+        
+        return {
+            "labels": [issue[0] for issue in sorted_issues],
+            "datasets": [{
+                "data": [issue[1] for issue in sorted_issues],
+                "backgroundColor": 'rgba(255, 99, 132, 0.5)',
+                "borderColor": 'rgb(255, 99, 132)',
+                "borderWidth": 1
+            }]
+        }
+    
+    def _format_topic_data(self, topic_data):
+        """Format topic distribution data for visualization"""
+        return {
+            "labels": list(topic_data['topic_distribution'].keys()),
+            "datasets": [{
+                "data": list(topic_data['topic_distribution'].values()),
+                "backgroundColor": [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)',
+                    'rgba(255, 159, 64, 0.5)'
+                ]
+            }]
+        }
+
+    def _format_sentiment_time_data(self, sentiment_data):
+        """Format sentiment over time data for visualization"""
+        if 'sentiment_over_time' not in sentiment_data:
+            return None
+            
+        time_data = sentiment_data['sentiment_over_time']
+        return {
+            "labels": time_data['time_periods'],
+            "datasets": [
+                {
+                    "label": 'Positive',
+                    "data": time_data['positive_percentages'],
+                    "borderColor": '#4caf50',
+                    "backgroundColor": 'rgba(76, 175, 80, 0.1)',
+                    "fill": True
+                },
+                {
+                    "label": 'Neutral',
+                    "data": time_data['neutral_percentages'],
+                    "borderColor": '#2196f3',
+                    "backgroundColor": 'rgba(33, 150, 243, 0.1)',
+                    "fill": True
+                },
+                {
+                    "label": 'Negative',
+                    "data": time_data['negative_percentages'],
+                    "borderColor": '#f44336',
+                    "backgroundColor": 'rgba(244, 67, 54, 0.1)',
+                    "fill": True
+                }
+            ]
+        }
+    
+    def _format_wordcloud_data(self, sentiment_data):
+        """Format word cloud data for visualization"""
+        if 'word_frequencies' not in sentiment_data:
+            return None
+            
+        return [[word, freq] for word, freq in sentiment_data['word_frequencies'].items()]
+    
+    def _format_influencers_data(self, engagement_data):
+        """Format influencers data for visualization"""
+        if 'top_influencers' not in engagement_data:
+            return None
+            
+        influencers = engagement_data['top_influencers']
+        return {
+            "labels": list(influencers.keys())[:10],  # Top 10 influencers
+            "datasets": [{
+                "label": 'Engagement Score',
+                "data": list(influencers.values())[:10],
+                "backgroundColor": 'rgba(153, 102, 255, 0.5)',
+                "borderColor": 'rgb(153, 102, 255)',
+                "borderWidth": 1
+            }]
+        }
+    
+    def _format_engagement_by_day_data(self, engagement_data):
+        """Format engagement by day data for visualization"""
+        if 'engagement_by_day' not in engagement_data:
+            return None
+            
+        day_data = engagement_data['engagement_by_day']
+        return {
+            "labels": day_data['days'],
+            "datasets": [
+                {
+                    "label": 'Posts by Day',
+                    "data": day_data['counts'],
+                    "backgroundColor": 'rgba(54, 162, 235, 0.5)',
+                    "borderColor": 'rgb(54, 162, 235)',
+                    "borderWidth": 1,
+                    "type": 'bar',
+                    "yAxisID": 'y'
+                },
+                {
+                    "label": 'Avg Engagement',
+                    "data": day_data['avg_engagement'],
+                    "borderColor": 'rgb(255, 99, 132)',
+                    "backgroundColor": 'rgba(255, 99, 132, 0.5)',
+                    "borderWidth": 2,
+                    "type": 'line',
+                    "yAxisID": 'y1'
+                }
+            ]
+        } 

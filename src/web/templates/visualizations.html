@@ -3,371 +3,176 @@
 {% block title %}Visualizations{% endblock %}
 
 {% block extra_css %}
-<style>
-    .chart-container {
-        position: relative;
-        height: 300px;
-        width: 100%;
-    }
-    .card {
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .card-header {
-        background-color: #f8f9fa;
-        font-weight: bold;
-    }
-</style>
+<!-- Chart.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
+<!-- Visualizations CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visualizations.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Visualization Controls -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Visualization Controls</h5>
-                </div>
-                <div class="card-body">
-                    <!-- Analysis Results Selector -->
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <div class="card border-primary">
-                                <div class="card-header bg-primary text-white">
-                                    <h6 class="mb-0">Analysis Results</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-8">
-                                            <label for="analysis-file" class="form-label">Select Analysis Results</label>
-                                            <select class="form-select" id="analysis-file">
-                                                <option value="">Loading available analyses...</option>
-                                            </select>
-                                            <div class="form-text">Select an analysis file to visualize its results</div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label for="refresh-analyses" class="form-label">&nbsp;</label>
-                                            <div class="d-grid">
-                                                <button class="btn btn-outline-secondary" id="refresh-analyses">
-                                                    <i class="fas fa-sync-alt"></i> Refresh List
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Analysis Details -->
-                                    <div class="mt-3 p-3 border rounded" id="analysis-details" style="display: none;">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <p class="mb-1"><strong>Dataset:</strong> <span id="analysis-dataset">-</span></p>
-                                                <p class="mb-1"><strong>Analysis Types:</strong> <span id="analysis-types">-</span></p>
-                                                <p class="mb-1"><strong>Date Range:</strong> <span id="analysis-date-range">-</span></p>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <p class="mb-1"><strong>Processing Mode:</strong> <span id="analysis-mode">-</span></p>
-                                                <p class="mb-1"><strong>Created:</strong> <span id="analysis-created">-</span></p>
-                                                <p class="mb-1"><strong>Size:</strong> <span id="analysis-size">-</span></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label for="viz-dataset" class="form-label">Dataset</label>
-                                <select class="form-select" id="viz-dataset">
-                                    <option value="all">All Datasets</option>
-                                    <option value="twitter">Twitter</option>
-                                    <option value="reddit">Reddit</option>
-                                    <option value="yelp">Yelp</option>
-                                    <option value="amazon">Amazon</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label for="viz-type" class="form-label">Visualization Type</label>
-                                <select class="form-select" id="viz-type">
-                                    <option value="all">All Available Visualizations</option>
-                                    <!-- Visualization options will be populated dynamically -->
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label for="viz-timeframe" class="form-label">Time Frame</label>
-                                <select class="form-select" id="viz-timeframe">
-                                    <option value="1h">Last Hour</option>
-                                    <option value="24h">Last 24 Hours</option>
-                                    <option value="7d">Last 7 Days</option>
-                                    <option value="30d">Last 30 Days</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label for="viz-refresh" class="form-label">Auto Refresh</label>
-                                <select class="form-select" id="viz-refresh">
-                                    <option value="0">Off</option>
-                                    <option value="30">Every 30 seconds</option>
-                                    <option value="60">Every minute</option>
-                                    <option value="300">Every 5 minutes</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 text-end">
-                            <button class="btn btn-primary" id="update-viz-btn">
-                                <i class="fas fa-sync-alt"></i> Update Visualizations
-                            </button>
-                        </div>
-                    </div>
-                </div>
+<h1 class="mb-4">Data Visualizations</h1>
+
+<div class="filters card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><i class="fas fa-filter"></i> Visualization Filters</h5>
+            <button id="refresh-analyses-btn" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-sync-alt"></i> Refresh Analysis Files
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <label for="analysis-select" class="form-label">
+                    Analysis File
+                    <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                       title="Select an analysis file to view its visualizations"></i>
+                </label>
+                <select id="analysis-select" class="form-select">
+                    <option value="">Select an analysis...</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="viz-type-select" class="form-label">
+                    Visualization Type
+                    <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                       title="Filter visualizations by type"></i>
+                </label>
+                <select id="viz-type-select" class="form-select">
+                    <option value="all">All Types</option>
+                    <option value="sentiment">Sentiment Analysis</option>
+                    <option value="trend">Trend Analysis</option>
+                    <option value="traffic">Traffic Incidents</option>
+                    <option value="location">Location Analysis</option>
+                    <option value="topic">Topic Modeling</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="timeframe-select" class="form-label">
+                    Timeframe
+                    <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
+                       title="Filter data by time period"></i>
+                </label>
+                <select id="timeframe-select" class="form-select">
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d" selected>Last 30 days</option>
+                    <option value="90d">Last 90 days</option>
+                    <option value="all">All time</option>
+                </select>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Visualization Dashboard -->
-    <div class="row mt-4" id="visualization-dashboard">
-        <div class="col-12 mb-3">
-            <div class="alert alert-info" id="no-analysis-alert">
-                <i class="fas fa-info-circle"></i> Please select an analysis file to view visualizations.
+<!-- Analysis File Info Section -->
+<div class="analysis-file-info" id="file-info-section" style="display: none;">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="info-item">
+                <span class="info-label"><i class="fas fa-file-alt me-1"></i> File:</span>
+                <span class="info-value" id="analysis-file-info">Not selected</span>
             </div>
         </div>
-        
-        <!-- Trend Analysis -->
-        <div class="col-md-6 viz-panel" id="trend-panel" style="display: none;">
+        <div class="col-md-4">
+            <div class="info-item">
+                <span class="info-label"><i class="fas fa-calendar-alt me-1"></i> Created:</span>
+                <span class="info-value" id="last-updated">N/A</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-item">
+                <span class="info-label"><i class="fas fa-database me-1"></i> Dataset:</span>
+                <span class="info-value" id="dataset-info">N/A</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="loading-indicator" class="text-center my-5" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading visualizations...</p>
+</div>
+
+<div id="no-data-message" class="alert alert-info text-center my-5">
+    <i class="fas fa-info-circle"></i> Select an analysis file to view visualizations.
+</div>
+
+<div id="visualizations-container" style="display: none;">
+    <div class="row">
+        <!-- Sentiment Analysis -->
+        <div class="col-md-6 viz-card" data-viz-type="sentiment">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Trend Analysis</h5>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-secondary download-btn" data-chart="trends">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary expand-btn" data-chart="trends">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                    </div>
+                <div class="card-header">
+                    <i class="fas fa-smile"></i> Sentiment Distribution
                 </div>
                 <div class="card-body">
                     <div class="chart-container">
-                        <canvas id="trends-chart"></canvas>
+                        <canvas id="sentiment-chart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Sentiment Analysis -->
-        <div class="col-md-6 viz-panel" id="sentiment-panel" style="display: none;">
+        <!-- Trend Analysis -->
+        <div class="col-md-6 viz-card" data-viz-type="trend">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Sentiment Distribution</h5>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-secondary download-btn" data-chart="sentiment">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary expand-btn" data-chart="sentiment">
-                            <i class="fas fa-expand"></i>
-                        </button>
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i> Engagement Trends
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="trend-chart"></canvas>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Traffic Incidents -->
+        <div class="col-md-6 viz-card" data-viz-type="traffic">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-car-crash"></i> Traffic Incidents
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="traffic-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location Analysis -->
+        <div class="col-md-6 viz-card" data-viz-type="location">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-map-marker-alt"></i> Location Analysis
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="location-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Topic Modeling -->
+        <div class="col-md-12 viz-card" data-viz-type="topic">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-tags"></i> Topic Analysis
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-8">
                             <div class="chart-container">
-                                <canvas id="sentiment-chart"></canvas>
+                                <canvas id="topic-distribution-chart"></canvas>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="sentiment-stats">
-                                <h6 class="mb-3">Sentiment Breakdown</h6>
-                                <div class="mb-2">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Positive:</span>
-                                        <strong id="positive-percent">0%</strong>
-                                    </div>
-                                    <div class="progress" style="height: 8px;">
-                                        <div id="positive-bar" class="progress-bar bg-success" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <div class="mb-2">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Neutral:</span>
-                                        <strong id="neutral-percent">0%</strong>
-                                    </div>
-                                    <div class="progress" style="height: 8px;">
-                                        <div id="neutral-bar" class="progress-bar bg-info" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <div class="mb-2">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Negative:</span>
-                                        <strong id="negative-percent">0%</strong>
-                                    </div>
-                                    <div class="progress" style="height: 8px;">
-                                        <div id="negative-bar" class="progress-bar bg-danger" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <div class="mt-4 small text-muted">
-                                    <p>Sentiment analysis evaluates the emotional tone of text data to determine if it's positive, negative, or neutral.</p>
-                                </div>
-                            </div>
+                            <h5 class="mb-3">Topic Keywords</h5>
+                            <div id="topic-keywords" class="border-start ps-3"></div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- User Engagement -->
-        <div class="col-md-6 viz-panel" id="engagement-panel" style="display: none;">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">User Engagement</h5>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-secondary download-btn" data-chart="engagement">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary expand-btn" data-chart="engagement">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="engagement-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Topic Distribution -->
-        <div class="col-md-6 viz-panel" id="topic-panel" style="display: none;">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Topic Distribution</h5>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-secondary download-btn" data-chart="topics">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary expand-btn" data-chart="topics">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="topics-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Sentiment Over Time (New) -->
-        <div class="col-md-6 viz-panel" id="sentiment-time-panel" style="display: none;">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Sentiment Over Time</h5>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-secondary download-btn" data-chart="sentiment-time">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary expand-btn" data-chart="sentiment-time">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="sentiment-time-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Key Influencers (New) -->
-        <div class="col-md-6 viz-panel" id="influencers-panel" style="display: none;">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Key Influencers</h5>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-secondary download-btn" data-chart="influencers">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary expand-btn" data-chart="influencers">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="influencers-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Word Cloud (New) -->
-        <div class="col-md-6 viz-panel" id="wordcloud-panel" style="display: none;">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Word Cloud</h5>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-secondary download-btn" data-chart="wordcloud">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary expand-btn" data-chart="wordcloud">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div id="wordcloud-container" class="chart-container d-flex justify-content-center align-items-center">
-                        <div id="wordcloud" style="width: 100%; height: 100%;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Geographic Distribution (New) -->
-        <div class="col-md-6 viz-panel" id="geo-panel" style="display: none;">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Geographic Distribution</h5>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-secondary download-btn" data-chart="geo">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary expand-btn" data-chart="geo">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="geo-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Expanded Chart Modal -->
-    <div class="modal fade" id="chart-modal" tabindex="-1" aria-labelledby="chart-modal-label" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="chart-modal-label">Expanded Chart</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div style="height: 600px;">
-                        <canvas id="modal-chart"></canvas>
                     </div>
                 </div>
             </div>
@@ -377,1147 +182,8 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
-<script>
-    // Chart objects
-    let trendsChart, sentimentChart, engagementChart, topicsChart, modalChart;
-    let sentimentTimeChart, influencersChart, geoChart;
-    let wordcloudInstance;
-    
-    // Initialize charts
-    $(document).ready(function() {
-        initCharts();
-        loadAnalysisFiles(); // Load available analysis files
-        
-        // Handle visualization controls
-        $('#update-viz-btn').click(function() {
-            loadVisualizations();
-        });
-        
-        // Set up auto-refresh if enabled
-        $('#viz-refresh').change(function() {
-            setupAutoRefresh();
-        });
-        
-        // Handle visualization type change
-        $('#viz-type').change(function() {
-            // Get the current analysis file
-            const files = $('#analysis-file').data('files');
-            const index = $('#analysis-file option:selected').data('index');
-            const file = files ? files[index] : null;
-            
-            // If a file is selected, update the visualizations based on the new type
-            if (file) {
-                // Show only relevant charts based on the selected visualization type
-                showRelevantCharts(file.types);
-            }
-        });
-        
-        // Handle analysis file selection
-        $('#analysis-file').change(function() {
-            const selectedFile = $(this).val();
-            if (selectedFile) {
-                loadAnalysisDetails(selectedFile);
-                
-                // Update visualization type dropdown based on available analysis types
-                updateVisualizationTypeOptions();
-                
-                // Auto-update visualizations when a file is selected
-                loadVisualizations();
-            } else {
-                $('#analysis-details').hide();
-                hideAllCharts();
-                $('#no-analysis-alert').show();
-            }
-        });
-        
-        // Refresh analysis files list
-        $('#refresh-analyses').click(function() {
-            loadAnalysisFiles();
-        });
-        
-        // Handle expand button clicks
-        $('.expand-btn').click(function() {
-            const chartType = $(this).data('chart');
-            expandChart(chartType);
-        });
-        
-        // Handle download button clicks
-        $('.download-btn').click(function() {
-            const chartType = $(this).data('chart');
-            downloadChart(chartType);
-        });
-    });
-    
-    // Function to update visualization type dropdown based on available analysis types
-    function updateVisualizationTypeOptions() {
-        const files = $('#analysis-file').data('files');
-        const index = $('#analysis-file option:selected').data('index');
-        const file = files ? files[index] : null;
-        
-        if (!file) return;
-        
-        // Clear existing options except "All Available Visualizations"
-        const $vizType = $('#viz-type');
-        $vizType.find('option:not(:first)').remove();
-        
-        // Map of analysis types to visualization types
-        const typeMapping = {
-            'trend': { value: 'trends', label: 'Trend Analysis' },
-            'sentiment': { value: 'sentiment', label: 'Sentiment Analysis' },
-            'engagement': { value: 'engagement', label: 'User Engagement' },
-            'topic': { value: 'topics', label: 'Topic Distribution' }
-        };
-        
-        // Add options based on available analysis types
-        file.types.forEach(type => {
-            if (typeMapping[type]) {
-                $vizType.append(`<option value="${typeMapping[type].value}">${typeMapping[type].label}</option>`);
-            }
-        });
-        
-        // Add additional visualization options based on available types
-        if (file.types.includes('sentiment')) {
-            $vizType.append('<option value="sentiment-time">Sentiment Over Time</option>');
-            $vizType.append('<option value="wordcloud">Word Cloud</option>');
-        }
-        
-        if (file.types.includes('engagement')) {
-            $vizType.append('<option value="influencers">Key Influencers</option>');
-        }
-        
-        if (file.dataset.toLowerCase().includes('twitter') || file.dataset.toLowerCase().includes('yelp')) {
-            $vizType.append('<option value="geo">Geographic Distribution</option>');
-        }
-    }
-    
-    // Function to load available analysis files
-    function loadAnalysisFiles() {
-        $('#analysis-file').html('<option value="">Loading available analyses...</option>');
-        
-        // Make AJAX call to get available analysis files
-        $.ajax({
-            url: '/api/get-analysis-files',
-            type: 'GET',
-            success: function(response) {
-                if (response.status === 'success') {
-                    populateAnalysisFiles(response.files);
-                } else {
-                    console.error('Error loading analysis files:', response.message);
-                    $('#analysis-file').html('<option value="">Error loading analyses</option>');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Error loading analysis files:', error);
-                $('#analysis-file').html('<option value="">Error loading analyses</option>');
-                
-                // For demo purposes, populate with mock data
-                populateAnalysisFilesMock();
-            }
-        });
-    }
-    
-    // Function to populate analysis files dropdown with mock data (for demo)
-    function populateAnalysisFilesMock() {
-        const mockFiles = [
-            {
-                id: 'twitter_climate_change_sentiment_trend_2023-10-01_2023-10-31',
-                dataset: 'Twitter Climate Change Data',
-                types: ['sentiment', 'trend'],
-                dateRange: '2023-10-01 to 2023-10-31',
-                mode: 'batch',
-                created: '2023-10-31 14:25',
-                size: '15 MB'
-            },
-            {
-                id: 'reddit_technology_sentiment_topic_2023-09-15_2023-10-15',
-                dataset: 'Reddit Technology Comments',
-                types: ['sentiment', 'topic'],
-                dateRange: '2023-09-15 to 2023-10-15',
-                mode: 'streaming',
-                created: '2023-10-16 09:12',
-                size: '22 MB'
-            },
-            {
-                id: 'yelp_restaurants_sentiment_engagement_2023-08-01_2023-10-31',
-                dataset: 'Yelp Restaurant Reviews',
-                types: ['sentiment', 'engagement'],
-                dateRange: '2023-08-01 to 2023-10-31',
-                mode: 'hybrid',
-                created: '2023-11-01 11:30',
-                size: '18 MB'
-            },
-            {
-                id: 'amazon_electronics_all_2023-01-01_2023-10-31',
-                dataset: 'Amazon Electronics Reviews',
-                types: ['sentiment', 'trend', 'engagement', 'topic'],
-                dateRange: '2023-01-01 to 2023-10-31',
-                mode: 'batch',
-                created: '2023-11-02 16:45',
-                size: '45 MB'
-            }
-        ];
-        
-        populateAnalysisFiles(mockFiles);
-    }
-    
-    // Function to populate analysis files dropdown
-    function populateAnalysisFiles(files) {
-        if (!files || files.length === 0) {
-            $('#analysis-file').html('<option value="">No analysis files available</option>');
-            return;
-        }
-        
-        let html = '<option value="">Select an analysis file...</option>';
-        
-        // Sort files by creation date (newest first)
-        files.sort((a, b) => new Date(b.created) - new Date(a.created));
-        
-        // Add a "Latest Analysis" option at the top
-        if (files.length > 0) {
-            const latest = files[0];
-            html += `<option value="${latest.id}" data-index="0">Latest: ${formatAnalysisName(latest)}</option>`;
-            html += '<option disabled>──────────────</option>';
-        }
-        
-        // Add all files
-        files.forEach((file, index) => {
-            html += `<option value="${file.id}" data-index="${index}">${formatAnalysisName(file)}</option>`;
-        });
-        
-        $('#analysis-file').html(html);
-        
-        // Store files data for later use
-        $('#analysis-file').data('files', files);
-        
-        // Select the latest analysis by default
-        if (files.length > 0) {
-            $('#analysis-file').val(files[0].id).trigger('change');
-        }
-    }
-    
-    // Format analysis name for display in dropdown
-    function formatAnalysisName(file) {
-        const dataset = file.dataset.split(' ')[0]; // First word of dataset name
-        const types = file.types.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(', ');
-        const mode = file.mode.charAt(0).toUpperCase() + file.mode.slice(1);
-        return `${dataset} - ${types} (${mode}) - ${file.created}`;
-    }
-    
-    // Load analysis details
-    function loadAnalysisDetails(fileId) {
-        const files = $('#analysis-file').data('files');
-        const index = $('#analysis-file option:selected').data('index');
-        const file = files[index];
-        
-        if (file) {
-            // Update analysis details
-            $('#analysis-dataset').text(file.dataset);
-            $('#analysis-types').text(file.types.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(', '));
-            $('#analysis-date-range').text(file.dateRange);
-            
-            // Set processing mode with appropriate badge
-            let modeHtml = '';
-            if (file.mode === 'batch') {
-                modeHtml = '<span class="badge bg-primary">Batch (Hadoop)</span>';
-            } else if (file.mode === 'streaming') {
-                modeHtml = '<span class="badge bg-success">Streaming (Spark)</span>';
-            } else if (file.mode === 'hybrid') {
-                modeHtml = '<span class="badge bg-warning text-dark">Hybrid (Hadoop + Spark)</span>';
-            }
-            $('#analysis-mode').html(modeHtml);
-            
-            $('#analysis-created').text(file.created);
-            $('#analysis-size').text(file.size);
-            
-            // Show analysis details
-            $('#analysis-details').show();
-            
-            // Update visualization controls based on selected analysis
-            updateControlsFromAnalysis(file);
-        } else {
-            $('#analysis-details').hide();
-        }
-    }
-    
-    // Update visualization controls based on selected analysis
-    function updateControlsFromAnalysis(file) {
-        // Extract dataset type from dataset name
-        const datasetLower = file.dataset.toLowerCase();
-        if (datasetLower.includes('twitter')) {
-            $('#viz-dataset').val('twitter');
-        } else if (datasetLower.includes('reddit')) {
-            $('#viz-dataset').val('reddit');
-        } else if (datasetLower.includes('yelp')) {
-            $('#viz-dataset').val('yelp');
-        } else if (datasetLower.includes('amazon')) {
-            $('#viz-dataset').val('amazon');
-        }
-        
-        // Set visualization type based on first analysis type
-        if (file.types.length > 0) {
-            const firstType = file.types[0];
-            if (firstType === 'sentiment') {
-                $('#viz-type').val('sentiment');
-            } else if (firstType === 'trend') {
-                $('#viz-type').val('trends');
-            } else if (firstType === 'engagement') {
-                $('#viz-type').val('engagement');
-            } else if (firstType === 'topic') {
-                $('#viz-type').val('topics');
-            }
-        }
-        
-        // Extract date range to set appropriate timeframe
-        const dateRangeParts = file.dateRange.split(' to ');
-        if (dateRangeParts.length === 2) {
-            const startDate = new Date(dateRangeParts[0]);
-            const endDate = new Date(dateRangeParts[1]);
-            const diffDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-            
-            if (diffDays <= 1) {
-                $('#viz-timeframe').val('24h');
-            } else if (diffDays <= 7) {
-                $('#viz-timeframe').val('7d');
-            } else {
-                $('#viz-timeframe').val('30d');
-            }
-        }
-    }
-
-    function initCharts() {
-        // Initialize Trends Chart
-        const trendsCtx = document.getElementById('trends-chart').getContext('2d');
-        trendsChart = new Chart(trendsCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: []
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Trend Analysis Over Time'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-        
-        // Initialize Sentiment Chart
-        const sentimentCtx = document.getElementById('sentiment-chart').getContext('2d');
-        sentimentChart = new Chart(sentimentCtx, {
-            type: 'doughnut',
-            data: {
-                labels: [],
-                datasets: []
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Sentiment Distribution'
-                    }
-                }
-            }
-        });
-        
-        // Initialize Engagement Chart
-        const engagementCtx = document.getElementById('engagement-chart').getContext('2d');
-        engagementChart = new Chart(engagementCtx, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: []
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'User Engagement by Hour'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-        
-        // Initialize Topics Chart
-        const topicsCtx = document.getElementById('topics-chart').getContext('2d');
-        topicsChart = new Chart(topicsCtx, {
-            type: 'polarArea',
-            data: {
-                labels: [],
-                datasets: []
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Topic Distribution'
-                    }
-                }
-            }
-        });
-        
-        // Initialize Sentiment Over Time Chart (new)
-        const sentimentTimeCtx = document.getElementById('sentiment-time-chart').getContext('2d');
-        sentimentTimeChart = new Chart(sentimentTimeCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: []
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Sentiment Trends Over Time'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        title: {
-                            display: true,
-                            text: 'Percentage'
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Initialize Key Influencers Chart (new)
-        const influencersCtx = document.getElementById('influencers-chart').getContext('2d');
-        influencersChart = new Chart(influencersCtx, {
-            type: 'horizontalBar',
-            data: {
-                labels: [],
-                datasets: []
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Top Influencers by Engagement'
-                    }
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Engagement Score'
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Initialize Geographic Distribution Chart (new)
-        const geoCtx = document.getElementById('geo-chart').getContext('2d');
-        geoChart = new Chart(geoCtx, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: []
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Geographic Distribution'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-        
-        // Initialize Modal Chart (will be configured when needed)
-        const modalCtx = document.getElementById('modal-chart').getContext('2d');
-        modalChart = new Chart(modalCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: []
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
-        
-        // Initialize Word Cloud (if library is available)
-        try {
-            if (typeof WordCloud !== 'undefined') {
-                wordcloudInstance = WordCloud(document.getElementById('wordcloud'), {
-                    list: [],
-                    gridSize: 16,
-                    weightFactor: 10,
-                    fontFamily: 'Arial',
-                    color: 'random-dark',
-                    rotateRatio: 0.5,
-                    rotationSteps: 2
-                });
-            }
-        } catch (e) {
-            console.warn('Word Cloud library not available:', e);
-        }
-    }
-    
-    let refreshInterval;
-    function setupAutoRefresh() {
-        // Clear any existing interval
-        if (refreshInterval) {
-            clearInterval(refreshInterval);
-        }
-        
-        // Get refresh rate in seconds
-        const refreshRate = parseInt($('#viz-refresh').val());
-        
-        // Set up new interval if refresh is enabled
-        if (refreshRate > 0) {
-            refreshInterval = setInterval(loadVisualizations, refreshRate * 1000);
-            console.log(`Auto-refresh enabled: Every ${refreshRate} seconds`);
-        } else {
-            console.log('Auto-refresh disabled');
-        }
-    }
-    
-    function loadVisualizations() {
-        // Get selected options
-        const analysisFile = $('#analysis-file').val();
-        const dataset = $('#viz-dataset').val();
-        const vizType = $('#viz-type').val();
-        const timeframe = $('#viz-timeframe').val();
-        
-        if (!analysisFile) {
-            alert('Please select an analysis file first');
-            return;
-        }
-        
-        // Hide all chart panels initially
-        hideAllCharts();
-        
-        // Show loading state
-        $('.chart-container').each(function() {
-            $(this).append('<div class="text-center position-absolute top-50 start-50 translate-middle"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-        });
-        
-        // Make AJAX call to get visualization data
-        $.ajax({
-            url: '/api/get-visualizations',
-            type: 'GET',
-            data: {
-                file: analysisFile,
-                dataset: dataset,
-                type: vizType,
-                timeframe: timeframe
-            },
-            success: function(response) {
-                if (response.status === 'success') {
-                    updateCharts(response.data);
-                } else {
-                    console.error('Error loading visualizations:', response.message);
-                    
-                    // For demo purposes, load mock data
-                    updateChartsMock();
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Error loading visualizations:', error);
-                
-                // For demo purposes, load mock data
-                updateChartsMock();
-            },
-            complete: function() {
-                // Remove loading indicators
-                $('.chart-container .spinner-border').parent().remove();
-            }
-        });
-    }
-    
-    // Hide all chart panels
-    function hideAllCharts() {
-        $('.viz-panel').hide();
-        $('#no-analysis-alert').show();
-    }
-    
-    // Show only relevant chart panels based on analysis types
-    function showRelevantCharts(types) {
-        hideAllCharts();
-        
-        // Get the selected visualization type from the dropdown
-        const selectedVizType = $('#viz-type').val();
-        
-        // If a specific visualization type is selected, only show that type
-        if (selectedVizType && selectedVizType !== 'all') {
-            // Only show the selected visualization type if it's included in the analysis
-            switch (selectedVizType) {
-                case 'trends':
-                    if (types.includes('trend')) {
-                        $('#trend-panel').show();
-                    } else {
-                        $('#no-analysis-alert').text('Trend analysis data is not available in this analysis file.').show();
-                        return;
-                    }
-                    break;
-                case 'sentiment':
-                    if (types.includes('sentiment')) {
-                        $('#sentiment-panel').show();
-                    } else {
-                        $('#no-analysis-alert').text('Sentiment analysis data is not available in this analysis file.').show();
-                        return;
-                    }
-                    break;
-                case 'engagement':
-                    if (types.includes('engagement')) {
-                        $('#engagement-panel').show();
-                    } else {
-                        $('#no-analysis-alert').text('User engagement data is not available in this analysis file.').show();
-                        return;
-                    }
-                    break;
-                case 'topics':
-                    if (types.includes('topic')) {
-                        $('#topic-panel').show();
-                    } else {
-                        $('#no-analysis-alert').text('Topic distribution data is not available in this analysis file.').show();
-                        return;
-                    }
-                    break;
-                case 'sentiment-time':
-                    if (types.includes('sentiment')) {
-                        $('#sentiment-time-panel').show();
-                    } else {
-                        $('#no-analysis-alert').text('Sentiment over time data is not available in this analysis file.').show();
-                        return;
-                    }
-                    break;
-                case 'influencers':
-                    if (types.includes('engagement')) {
-                        $('#influencers-panel').show();
-                    } else {
-                        $('#no-analysis-alert').text('Key influencers data is not available in this analysis file.').show();
-                        return;
-                    }
-                    break;
-                case 'wordcloud':
-                    if (types.includes('sentiment') || types.includes('topic')) {
-                        $('#wordcloud-panel').show();
-                    } else {
-                        $('#no-analysis-alert').text('Word cloud data is not available in this analysis file.').show();
-                        return;
-                    }
-                    break;
-                case 'geo':
-                    $('#geo-panel').show();
-                    break;
-            }
-        } else {
-            // Show all available visualizations based on analysis types
-            if (types.includes('trend')) {
-                $('#trend-panel').show();
-            }
-            
-            if (types.includes('sentiment')) {
-                $('#sentiment-panel').show();
-                $('#sentiment-time-panel').show();
-                $('#wordcloud-panel').show();
-            }
-            
-            if (types.includes('engagement')) {
-                $('#engagement-panel').show();
-                $('#influencers-panel').show();
-            }
-            
-            if (types.includes('topic')) {
-                $('#topic-panel').show();
-            }
-            
-            // Show geographic distribution if dataset is Twitter or Yelp
-            const files = $('#analysis-file').data('files');
-            const index = $('#analysis-file option:selected').data('index');
-            const file = files ? files[index] : null;
-            
-            if (file && (file.dataset.toLowerCase().includes('twitter') || file.dataset.toLowerCase().includes('yelp'))) {
-                $('#geo-panel').show();
-            }
-        }
-        
-        // If no charts are shown, display a message
-        if ($('.viz-panel:visible').length === 0) {
-            $('#no-analysis-alert').text('No visualizations available for the selected analysis.').show();
-        } else {
-            $('#no-analysis-alert').hide();
-        }
-        
-        // Adjust layout based on number of visible panels
-        const visiblePanels = $('.viz-panel:visible').length;
-        if (visiblePanels === 1) {
-            $('.viz-panel:visible').removeClass('col-md-6').addClass('col-md-12');
-        } else {
-            $('.viz-panel').removeClass('col-md-12').addClass('col-md-6');
-        }
-    }
-    
-    // Expand chart to modal
-    function expandChart(chartType) {
-        const modal = new bootstrap.Modal(document.getElementById('chart-modal'));
-        let sourceChart;
-        let chartTitle = '';
-        
-        // Determine which chart to expand
-        switch (chartType) {
-            case 'trends':
-                sourceChart = trendsChart;
-                chartTitle = 'Trend Analysis';
-                break;
-            case 'sentiment':
-                sourceChart = sentimentChart;
-                chartTitle = 'Sentiment Distribution';
-                break;
-            case 'engagement':
-                sourceChart = engagementChart;
-                chartTitle = 'User Engagement';
-                break;
-            case 'topics':
-                sourceChart = topicsChart;
-                chartTitle = 'Topic Distribution';
-                break;
-            case 'sentiment-time':
-                sourceChart = sentimentTimeChart;
-                chartTitle = 'Sentiment Over Time';
-                break;
-            case 'influencers':
-                sourceChart = influencersChart;
-                chartTitle = 'Key Influencers';
-                break;
-            case 'geo':
-                sourceChart = geoChart;
-                chartTitle = 'Geographic Distribution';
-                break;
-            case 'wordcloud':
-                // Special handling for wordcloud
-                chartTitle = 'Word Cloud';
-                // We'll need to handle this differently as it's not a Chart.js instance
-                $('#chart-modal-label').text(chartTitle);
-                modal.show();
-                return;
-        }
-        
-        // Update modal title
-        $('#chart-modal-label').text(chartTitle);
-        
-        // Copy chart configuration to modal chart
-        modalChart.config.type = sourceChart.config.type;
-        modalChart.data = JSON.parse(JSON.stringify(sourceChart.data));
-        modalChart.options = JSON.parse(JSON.stringify(sourceChart.options));
-        modalChart.update();
-        
-        // Show modal
-        modal.show();
-    }
-    
-    // Download chart as image
-    function downloadChart(chartType) {
-        let chart;
-        let filename = '';
-        
-        // Determine which chart to download
-        switch (chartType) {
-            case 'trends':
-                chart = trendsChart;
-                filename = 'trend-analysis.png';
-                break;
-            case 'sentiment':
-                chart = sentimentChart;
-                filename = 'sentiment-distribution.png';
-                break;
-            case 'engagement':
-                chart = engagementChart;
-                filename = 'user-engagement.png';
-                break;
-            case 'topics':
-                chart = topicsChart;
-                filename = 'topic-distribution.png';
-                break;
-            case 'sentiment-time':
-                chart = sentimentTimeChart;
-                filename = 'sentiment-over-time.png';
-                break;
-            case 'influencers':
-                chart = influencersChart;
-                filename = 'key-influencers.png';
-                break;
-            case 'geo':
-                chart = geoChart;
-                filename = 'geographic-distribution.png';
-                break;
-            case 'wordcloud':
-                // Special handling for wordcloud
-                alert('Word cloud download not supported');
-                return;
-        }
-        
-        // Create a temporary link to download the chart
-        const link = document.createElement('a');
-        link.href = chart.toBase64Image();
-        link.download = filename;
-        link.click();
-    }
-    
-    // Update charts with mock data (for demo purposes)
-    function updateChartsMock() {
-        const selectedFile = $('#analysis-file').val();
-        const files = $('#analysis-file').data('files');
-        const index = $('#analysis-file option:selected').data('index');
-        const file = files ? files[index] : null;
-        
-        // Generate mock data based on selected file
-        const mockData = generateMockData(file);
-        updateCharts(mockData, file);
-    }
-    
-    // Generate mock visualization data based on selected analysis file
-    function generateMockData(file) {
-        const data = {
-            trends: {
-                labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
-                datasets: [{
-                    label: 'Topic Mentions',
-                    data: [65, 59, 80, 81, 56, 55, 40],
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1,
-                    fill: false
-                }]
-            },
-            sentiment: {
-                labels: ['Positive', 'Neutral', 'Negative'],
-                datasets: [{
-                    data: [300, 150, 100],
-                    backgroundColor: ['#4caf50', '#2196f3', '#f44336'],
-                    hoverOffset: 4
-                }]
-            },
-            engagement: {
-                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-                datasets: [{
-                    label: 'Engagement',
-                    data: [12, 19, 3, 5, 2, 3],
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgb(54, 162, 235)',
-                    borderWidth: 1
-                }]
-            },
-            topics: {
-                labels: ['Technology', 'Politics', 'Entertainment', 'Sports', 'Science'],
-                datasets: [{
-                    data: [11, 16, 7, 3, 14],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.5)',
-                        'rgba(54, 162, 235, 0.5)',
-                        'rgba(255, 206, 86, 0.5)',
-                        'rgba(75, 192, 192, 0.5)',
-                        'rgba(153, 102, 255, 0.5)'
-                    ]
-                }]
-            },
-            // New chart data
-            sentimentTime: {
-                labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
-                datasets: [
-                    {
-                        label: 'Positive',
-                        data: [45, 52, 48, 55, 50, 60, 58],
-                        borderColor: '#4caf50',
-                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                        fill: true
-                    },
-                    {
-                        label: 'Neutral',
-                        data: [30, 28, 32, 25, 30, 25, 27],
-                        borderColor: '#2196f3',
-                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                        fill: true
-                    },
-                    {
-                        label: 'Negative',
-                        data: [25, 20, 20, 20, 20, 15, 15],
-                        borderColor: '#f44336',
-                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
-                        fill: true
-                    }
-                ]
-            },
-            influencers: {
-                labels: ['@user1', '@user2', '@user3', '@user4', '@user5', '@user6', '@user7', '@user8'],
-                datasets: [{
-                    label: 'Engagement Score',
-                    data: [120, 115, 90, 85, 80, 75, 70, 65],
-                    backgroundColor: 'rgba(153, 102, 255, 0.5)',
-                    borderColor: 'rgb(153, 102, 255)',
-                    borderWidth: 1
-                }]
-            },
-            geo: {
-                labels: ['USA', 'UK', 'Canada', 'Australia', 'Germany', 'France', 'India', 'Japan'],
-                datasets: [{
-                    label: 'Post Distribution',
-                    data: [250, 120, 100, 80, 70, 60, 50, 40],
-                    backgroundColor: 'rgba(255, 159, 64, 0.5)',
-                    borderColor: 'rgb(255, 159, 64)',
-                    borderWidth: 1
-                }]
-            },
-            wordcloud: [
-                ['data', 40],
-                ['analysis', 35],
-                ['big', 30],
-                ['cloud', 28],
-                ['processing', 25],
-                ['hadoop', 22],
-                ['spark', 20],
-                ['streaming', 18],
-                ['batch', 16],
-                ['visualization', 15],
-                ['sentiment', 14],
-                ['topic', 13],
-                ['engagement', 12],
-                ['trend', 11],
-                ['social', 10],
-                ['media', 9],
-                ['twitter', 8],
-                ['reddit', 7],
-                ['amazon', 6],
-                ['yelp', 5]
-            ]
-        };
-        
-        // Customize data based on file properties if available
-        if (file) {
-            // Adjust sentiment distribution based on dataset
-            if (file.dataset.toLowerCase().includes('twitter')) {
-                data.sentiment.datasets[0].data = [250, 100, 150]; // More polarized
-                data.geo.labels = ['USA', 'UK', 'Canada', 'India', 'Australia', 'Brazil', 'Japan', 'Nigeria'];
-                data.geo.datasets[0].data = [300, 150, 120, 100, 80, 60, 50, 40];
-            } else if (file.dataset.toLowerCase().includes('reddit')) {
-                data.sentiment.datasets[0].data = [200, 250, 50]; // More neutral
-                data.influencers.labels = ['u/user1', 'u/user2', 'u/user3', 'u/user4', 'u/user5', 'u/user6', 'u/user7', 'u/user8'];
-            } else if (file.dataset.toLowerCase().includes('yelp')) {
-                data.geo.labels = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego'];
-                data.geo.datasets[0].data = [180, 160, 140, 120, 100, 90, 80, 70];
-            }
-            
-            // Adjust topics based on dataset
-            if (file.dataset.toLowerCase().includes('technology')) {
-                data.topics.labels = ['Programming', 'AI', 'Web Dev', 'Mobile', 'Cloud'];
-                data.wordcloud = [
-                    ['programming', 40],
-                    ['javascript', 35],
-                    ['python', 30],
-                    ['ai', 28],
-                    ['machine learning', 25],
-                    ['web', 22],
-                    ['react', 20],
-                    ['node', 18],
-                    ['cloud', 16],
-                    ['aws', 15],
-                    ['mobile', 14],
-                    ['app', 13],
-                    ['development', 12],
-                    ['code', 11],
-                    ['github', 10],
-                    ['api', 9],
-                    ['database', 8],
-                    ['sql', 7],
-                    ['frontend', 6],
-                    ['backend', 5]
-                ];
-            } else if (file.dataset.toLowerCase().includes('restaurant')) {
-                data.topics.labels = ['Food Quality', 'Service', 'Ambiance', 'Price', 'Location'];
-                data.wordcloud = [
-                    ['delicious', 40],
-                    ['tasty', 35],
-                    ['service', 30],
-                    ['friendly', 28],
-                    ['atmosphere', 25],
-                    ['price', 22],
-                    ['expensive', 20],
-                    ['value', 18],
-                    ['location', 16],
-                    ['convenient', 15],
-                    ['menu', 14],
-                    ['variety', 13],
-                    ['fresh', 12],
-                    ['quality', 11],
-                    ['recommend', 10],
-                    ['wait', 9],
-                    ['reservation', 8],
-                    ['staff', 7],
-                    ['clean', 6],
-                    ['parking', 5]
-                ];
-            }
-            
-            // Adjust trend data based on processing mode
-            if (file.mode === 'streaming') {
-                // More recent data points for streaming
-                data.trends.labels = ['1h ago', '50m ago', '40m ago', '30m ago', '20m ago', '10m ago', 'Now'];
-                data.sentimentTime.labels = data.trends.labels;
-            } else if (file.mode === 'batch') {
-                // More historical data for batch
-                data.trends.labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-                data.trends.datasets[0].data = [45, 52, 68, 74];
-                data.sentimentTime.labels = data.trends.labels;
-                data.sentimentTime.datasets[0].data = [40, 45, 50, 55];
-                data.sentimentTime.datasets[1].data = [35, 30, 30, 25];
-                data.sentimentTime.datasets[2].data = [25, 25, 20, 20];
-            }
-        }
-        
-        return data;
-    }
-    
-    function updateCharts(data, file) {
-        // If file is not provided, try to get it from the dropdown
-        if (!file) {
-            const files = $('#analysis-file').data('files');
-            const index = $('#analysis-file option:selected').data('index');
-            file = files ? files[index] : null;
-        }
-        
-        // Show only relevant charts based on analysis types
-        if (file && file.types) {
-            showRelevantCharts(file.types);
-        }
-        
-        // Update Trends Chart
-        if (data.trends) {
-            trendsChart.data.labels = data.trends.labels;
-            trendsChart.data.datasets = data.trends.datasets;
-            trendsChart.update();
-        }
-        
-        // Update Sentiment Chart
-        if (data.sentiment) {
-            sentimentChart.data.labels = data.sentiment.labels;
-            sentimentChart.data.datasets = data.sentiment.datasets;
-            sentimentChart.update();
-            
-            // Update sentiment statistics
-            updateSentimentStats(data.sentiment);
-        }
-        
-        // Update Engagement Chart
-        if (data.engagement) {
-            engagementChart.data.labels = data.engagement.labels;
-            engagementChart.data.datasets = data.engagement.datasets;
-            engagementChart.update();
-        }
-        
-        // Update Topics Chart
-        if (data.topics) {
-            topicsChart.data.labels = data.topics.labels;
-            topicsChart.data.datasets = data.topics.datasets;
-            topicsChart.update();
-        }
-        
-        // Update new charts
-        if (data.sentimentTime) {
-            sentimentTimeChart.data.labels = data.sentimentTime.labels;
-            sentimentTimeChart.data.datasets = data.sentimentTime.datasets;
-            sentimentTimeChart.update();
-        }
-        
-        if (data.influencers) {
-            influencersChart.data.labels = data.influencers.labels;
-            influencersChart.data.datasets = data.influencers.datasets;
-            influencersChart.update();
-        }
-        
-        if (data.geo) {
-            geoChart.data.labels = data.geo.labels;
-            geoChart.data.datasets = data.geo.datasets;
-            geoChart.update();
-        }
-        
-        // Update word cloud if available
-        if (data.wordcloud && typeof WordCloud !== 'undefined') {
-            try {
-                WordCloud(document.getElementById('wordcloud'), {
-                    list: data.wordcloud,
-                    gridSize: 16,
-                    weightFactor: 1,
-                    fontFamily: 'Arial',
-                    color: 'random-dark',
-                    rotateRatio: 0.5,
-                    rotationSteps: 2,
-                    backgroundColor: 'transparent'
-                });
-            } catch (e) {
-                console.warn('Error updating word cloud:', e);
-            }
-        }
-    }
-    
-    // Update sentiment statistics based on sentiment data
-    function updateSentimentStats(sentimentData) {
-        if (!sentimentData || !sentimentData.datasets || !sentimentData.datasets[0] || !sentimentData.datasets[0].data) {
-            return;
-        }
-        
-        const data = sentimentData.datasets[0].data;
-        const total = data.reduce((sum, value) => sum + value, 0);
-        
-        if (total === 0) {
-            return;
-        }
-        
-        // Calculate percentages
-        const positivePercent = Math.round((data[0] / total) * 100);
-        const neutralPercent = Math.round((data[1] / total) * 100);
-        const negativePercent = Math.round((data[2] / total) * 100);
-        
-        // Update percentage text
-        $('#positive-percent').text(positivePercent + '%');
-        $('#neutral-percent').text(neutralPercent + '%');
-        $('#negative-percent').text(negativePercent + '%');
-        
-        // Update progress bars
-        $('#positive-bar').css('width', positivePercent + '%');
-        $('#neutral-bar').css('width', neutralPercent + '%');
-        $('#negative-bar').css('width', negativePercent + '%');
-    }
-</script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<!-- Visualization JS -->
+<script src="{{ url_for('static', filename='js/visualizations.js') }}"></script>
 {% endblock %} 

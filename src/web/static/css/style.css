@@ -155,4 +155,161 @@ body {
     .top-bar {
         padding-left: 60px;
     }
+}
+
+/* Common styles for all pages */
+.navbar {
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.nav-link.active {
+    font-weight: bold;
+}
+
+.card {
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+/* Chart styles */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 30px;
+}
+
+/* Filter section styles */
+.filters {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* Help icons */
+.help-icon {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-left: 5px;
+    cursor: help;
+}
+
+/* Tooltips */
+.tooltip-inner {
+    max-width: 300px;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Analysis page specific styles */
+.analysis-card {
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.metric-card {
+    text-align: center;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.metric-label {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+/* Dataset cards */
+.dataset-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.dataset-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.dataset-card.selected {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+/* Processing mode info */
+.processing-mode-info {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    border-left: 4px solid #17a2b8;
+}
+
+.processing-mode-info h6 {
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.processing-mode-info p {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+/* Log output */
+.log-output {
+    height: 200px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.9rem;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Progress bars */
+.progress {
+    height: 20px;
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    transition: width 0.3s ease;
+}
+
+/* Loading indicators */
+.loading-indicator {
+    text-align: center;
+    padding: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 250px;
+    }
+    
+    .filters .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .card-columns {
+        column-count: 1;
+    }
 } 
