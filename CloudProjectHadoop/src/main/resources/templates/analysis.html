@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Analysis - {{ANALYSIS_TYPE}}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .chart-container {
+            height: 500px;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .navigation {
+            margin-top: 20px;
+        }
+        .navigation a {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .navigation a:hover {
+            background-color: #0052a3;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .data-table th, .data-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #f2f2f2;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            margin-right: 5px;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+        .tab-button.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Traffic Analysis - {{ANALYSIS_TYPE}}</h1>
+            <p>Generated on: {{TIMESTAMP}}</p>
+        </div>
+        
+        <div class="info-box">
+            <h3>About This Analysis</h3>
+            <p>This visualization shows the results of the <strong>{{ANALYSIS_TYPE}}</strong> analysis performed on traffic data. The chart displays the frequency or values associated with each data point in the analysis.</p>
+        </div>
+
+        <div id="errorContainer" class="error" style="display: none;">
+            <h3>Error</h3>
+            <p id="errorMessage"></p>
+            <p>Please check the data format or try refreshing the page.</p>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <div class="tab-button active" onclick="openTab('chartTab')">Chart View</div>
+                <div class="tab-button" onclick="openTab('tableTab')">Table View</div>
+                <div class="tab-button" onclick="openTab('jsonTab')">JSON Data</div>
+            </div>
+            
+            <div id="chartTab" class="tab-content active">
+                <div class="chart-container">
+                    <canvas id="analysisChart"></canvas>
+                </div>
+            </div>
+            
+            <div id="tableTab" class="tab-content">
+                <h2>Data Table</h2>
+                <div class="table-container">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Data will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="jsonTab" class="tab-content">
+                <h2>Raw JSON Data</h2>
+                <pre id="jsonData" style="background-color: #f5f5f5; padding: 15px; overflow: auto; max-height: 400px;"></pre>
+            </div>
+        </div>
+        
+        <div class="navigation">
+            <a href="index.html">Back to All Visualizations</a>
+        </div>
+    </div>
+    
+    <script>
+        // Function to open tabs
+        function openTab(tabName) {
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+            
+            const tabButtons = document.getElementsByClassName('tab-button');
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove('active');
+            }
+            
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+    
+        // Parse the data JSON
+        let analysisData;
+        let chartData = {
+            labels: [],
+            values: []
+        };
+        
+        try {
+            // Try parsing the JSON data
+            analysisData = {{DATA_JSON}};
+            document.getElementById('jsonData').textContent = JSON.stringify(analysisData, null, 2);
+            
+            // Process data based on its structure
+            processData();
+            
+            // Create chart and populate table
+            createChart();
+            populateTable();
+        } catch (error) {
+            // Show error message
+            console.error('Error processing data:', error);
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('errorMessage').textContent = error.message;
+        }
+        
+        // Function to process data based on its structure
+        function processData() {
+            // Clear existing data
+            chartData.labels = [];
+            chartData.values = [];
+            
+            // Check for different possible data structures
+            if (analysisData.data && Array.isArray(analysisData.data)) {
+                // Data is in a direct array format
+                analysisData.data.forEach(item => {
+                    if (item.key !== undefined && item.value !== undefined) {
+                        chartData.labels.push(item.key);
+                        chartData.values.push(item.value);
+                    } else if (item.key !== undefined && item.count !== undefined) {
+                        chartData.labels.push(item.key);
+                        chartData.values.push(item.count);
+                    }
+                });
+            } else if (analysisData.categories) {
+                // Data is organized by categories
+                let allData = [];
+                
+                Object.keys(analysisData.categories).forEach(category => {
+                    if (Array.isArray(analysisData.categories[category])) {
+                        analysisData.categories[category].forEach(item => {
+                            if (item.key !== undefined && (item.value !== undefined || item.count !== undefined)) {
+                                const value = item.value !== undefined ? item.value : item.count;
+                                allData.push({
+                                    key: item.key,
+                                    value: value,
+                                    category: category
+                                });
+                            }
+                        });
+                    }
+                });
+                
+                // Sort by value descending
+                allData.sort((a, b) => b.value - a.value);
+                
+                // Take top 20 items for the visualization
+                const topItems = allData.slice(0, 20);
+                
+                topItems.forEach(item => {
+                    chartData.labels.push(item.key);
+                    chartData.values.push(item.value);
+                });
+            } else if (analysisData.results) {
+                // Data might be in a 'results' object
+                let allData = [];
+                
+                Object.keys(analysisData.results).forEach(category => {
+                    if (Array.isArray(analysisData.results[category])) {
+                        analysisData.results[category].forEach(item => {
+                            if (typeof item === 'object') {
+                                const key = item.key || item.name || category;
+                                const value = item.value || item.count || 0;
+                                allData.push({ key, value, category });
+                            }
+                        });
+                    }
+                });
+                
+                // Sort by value descending
+                allData.sort((a, b) => b.value - a.value);
+                
+                // Take top items for the visualization
+                const topItems = allData.slice(0, 20);
+                
+                topItems.forEach(item => {
+                    chartData.labels.push(item.key);
+                    chartData.values.push(item.value);
+                });
+            }
+            
+            // If no data was found, throw an error
+            if (chartData.labels.length === 0) {
+                throw new Error('No valid data found in the provided JSON structure');
+            }
+        }
+        
+        // Function to create the chart
+        function createChart() {
+            const ctx = document.getElementById('analysisChart').getContext('2d');
+            const myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: '{{ANALYSIS_TYPE}} Analysis',
+                        data: chartData.values,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Count/Value'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '{{ANALYSIS_TYPE}}'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '{{ANALYSIS_TYPE}} Analysis Results',
+                            font: {
+                                size: 18
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Function to populate the table
+        function populateTable() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            for (let i = 0; i < chartData.labels.length; i++) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${chartData.labels[i]}</td>
+                    <td>${chartData.values[i]}</td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+    </script>
+</body>
+</html> 

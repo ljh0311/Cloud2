@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Analysis Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-box {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .visualization-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .visualization-list li {
+            margin-bottom: 10px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .visualization-list li:hover {
+            background-color: #f0f0f0;
+        }
+        .visualization-list a {
+            display: block;
+            color: #0066cc;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .visualization-list a:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            color: #777;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Traffic Analysis Dashboard</h1>
+            <p>A comprehensive view of traffic data analyses</p>
+        </div>
+        
+        <div class="info-box">
+            <h3>About This Dashboard</h3>
+            <p>This dashboard provides visualizations for various traffic data analyses performed using Hadoop MapReduce. Click on any analysis to view detailed results and visualizations.</p>
+        </div>
+        
+        <h2>Available Visualizations</h2>
+        <ul class="visualization-list">
+            {{VISUALIZATION_LINKS}}
+        </ul>
+        
+        <div class="footer">
+            <p>Generated on: {{GENERATION_TIME}}</p>
+            <p>Powered by Hadoop MapReduce and Apache Spark</p>
+        </div>
+    </div>
+</body>
+</html> 

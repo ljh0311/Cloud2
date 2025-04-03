@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Analysis - Heatmap</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .map-container {
+            height: 600px;
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        .info-box {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .control-group {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .navigation {
+            margin-top: 20px;
+        }
+        .navigation a {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .navigation a:hover {
+            background-color: #0052a3;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .data-table th, .data-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #f2f2f2;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .legend {
+            padding: 6px 8px;
+            font: 14px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            line-height: 24px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Traffic Analysis - Heatmap</h1>
+            <p>Generated on: {{TIMESTAMP}}</p>
+        </div>
+        
+        <div class="info-box">
+            <h3>About This Analysis</h3>
+            <p>This visualization shows a heatmap of traffic incidents or mentions across geographic locations. Areas with higher intensity indicate more traffic-related activity or incidents.</p>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="radiusRange">Heat Radius:</label>
+                <input type="range" id="radiusRange" min="5" max="30" value="15" onchange="updateHeatmap()">
+                <span id="radiusValue">15</span>
+            </div>
+            <div class="control-group">
+                <label for="intensityRange">Heat Intensity:</label>
+                <input type="range" id="intensityRange" min="0.1" max="1" value="0.5" step="0.1" onchange="updateHeatmap()">
+                <span id="intensityValue">0.5</span>
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <h2>Top Locations</h2>
+        <div class="table-container">
+            <table class="data-table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Location</th>
+                        <th>Latitude</th>
+                        <th>Longitude</th>
+                        <th>Intensity</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="navigation">
+            <a href="index.html">Back to All Visualizations</a>
+        </div>
+    </div>
+    
+    <script>
+        // Parse the data JSON
+        const analysisData = {{DATA_JSON}};
+        
+        // Process heatmap data
+        const heatmapData = [];
+        const locationData = [];
+        
+        // Default center if no data
+        let mapCenter = [1.3521, 103.8198]; // Singapore
+        let maxIntensity = 0;
+        
+        if (analysisData.data && Array.isArray(analysisData.data)) {
+            // Sort by value (intensity) descending
+            const sortedData = [...analysisData.data].sort((a, b) => b.value - a.value);
+            
+            sortedData.forEach(item => {
+                try {
+                    // Expect key to be in format "lat,lng" or have lat/lng properties
+                    let lat, lng, intensity = item.value;
+                    
+                    if (typeof item.key === 'string' && item.key.includes(',')) {
+                        // Format: "lat,lng"
+                        const parts = item.key.split(',');
+                        lat = parseFloat(parts[0].trim());
+                        lng = parseFloat(parts[1].trim());
+                    } else if (item.lat !== undefined && item.lng !== undefined) {
+                        // Format: {lat: x, lng: y}
+                        lat = parseFloat(item.lat);
+                        lng = parseFloat(item.lng);
+                    } else if (item.latitude !== undefined && item.longitude !== undefined) {
+                        // Format: {latitude: x, longitude: y}
+                        lat = parseFloat(item.latitude);
+                        lng = parseFloat(item.longitude);
+                    }
+                    
+                    // Only add valid coordinates
+                    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                        heatmapData.push([lat, lng, intensity]);
+                        
+                        // Keep track of location data for the table
+                        locationData.push({
+                            lat,
+                            lng,
+                            intensity,
+                            name: item.name || item.location || `Location at [${lat.toFixed(4)}, ${lng.toFixed(4)}]`
+                        });
+                        
+                        // Update max intensity for scaling
+                        maxIntensity = Math.max(maxIntensity, intensity);
+                        
+                        // Use the highest intensity point as the map center
+                        if (intensity === maxIntensity) {
+                            mapCenter = [lat, lng];
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error processing data point:", e);
+                }
+            });
+        }
+        
+        // Initialize the map
+        const map = L.map('map').setView(mapCenter, 11);
+        
+        // Add the base map layer (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Initialize the heat layer
+        let heatLayer;
+        
+        // Function to update the heatmap based on controls
+        function updateHeatmap() {
+            const radius = parseInt(document.getElementById('radiusRange').value);
+            const intensity = parseFloat(document.getElementById('intensityRange').value);
+            
+            // Update displayed values
+            document.getElementById('radiusValue').textContent = radius;
+            document.getElementById('intensityValue').textContent = intensity;
+            
+            // Remove previous heat layer if it exists
+            if (heatLayer) {
+                map.removeLayer(heatLayer);
+            }
+            
+            // Create a new heat layer with updated settings
+            heatLayer = L.heatLayer(heatmapData, {
+                radius: radius,
+                blur: radius * 1.5,
+                maxZoom: 15,
+                max: maxIntensity,
+                gradient: {
+                    0.0: 'blue',
+                    0.25: 'lime',
+                    0.5: 'yellow',
+                    0.75: 'orange',
+                    1.0: 'red'
+                },
+                minOpacity: intensity
+            }).addTo(map);
+        }
+        
+        // Populate the table with location data
+        function populateTable() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            // Sort by intensity descending and take top 20
+            const topLocations = locationData
+                .sort((a, b) => b.intensity - a.intensity)
+                .slice(0, 20);
+            
+            topLocations.forEach(location => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${location.name}</td>
+                    <td>${location.lat.toFixed(5)}</td>
+                    <td>${location.lng.toFixed(5)}</td>
+                    <td>${location.intensity}</td>
+                `;
+                
+                // Add a click handler to center the map on this location
+                row.addEventListener('click', function() {
+                    map.setView([location.lat, location.lng], 14);
+                });
+                
+                // Make the row look clickable
+                row.style.cursor = 'pointer';
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Add a legend
+        function addLegend() {
+            const legend = L.control({position: 'bottomright'});
+            
+            legend.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'legend');
+                const grades = [0, Math.ceil(maxIntensity * 0.25), Math.ceil(maxIntensity * 0.5), Math.ceil(maxIntensity * 0.75), maxIntensity];
+                const colors = ['blue', 'lime', 'yellow', 'orange', 'red'];
+                
+                div.innerHTML = '<h4>Traffic Intensity</h4>';
+                
+                for (let i = 0; i < grades.length; i++) {
+                    div.innerHTML +=
+                        '<i style="background:' + colors[i] + '"></i> ' +
+                        grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+                }
+                
+                return div;
+            };
+            
+            legend.addTo(map);
+        }
+        
+        // Initialize the visualization
+        document.addEventListener('DOMContentLoaded', function() {
+            updateHeatmap();
+            populateTable();
+            addLegend();
+            
+            // Add markers for top 10 most intense locations
+            const top10Locations = locationData
+                .sort((a, b) => b.intensity - a.intensity)
+                .slice(0, 10);
+                
+            top10Locations.forEach(location => {
+                L.marker([location.lat, location.lng])
+                    .addTo(map)
+                    .bindPopup(`<b>${location.name}</b><br>Intensity: ${location.intensity}`);
+            });
+        });
+    </script>
+</body>
+</html> 

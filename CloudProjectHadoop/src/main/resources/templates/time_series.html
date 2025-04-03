@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Analysis - Time Series</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .chart-container {
+            height: 500px;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .navigation {
+            margin-top: 20px;
+        }
+        .navigation a {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .navigation a:hover {
+            background-color: #0052a3;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .control-group {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .data-table th, .data-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #f2f2f2;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Traffic Analysis - Time Series</h1>
+            <p>Generated on: {{TIMESTAMP}}</p>
+        </div>
+        
+        <div class="info-box">
+            <h3>About This Analysis</h3>
+            <p>This visualization shows time-based analysis of traffic data. The chart displays patterns and trends over time, allowing for identification of peak traffic periods, anomalies, and seasonal patterns.</p>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="timeUnitSelect">Time Unit:</label>
+                <select id="timeUnitSelect" onchange="updateTimeChart()">
+                    <option value="hour">Hourly</option>
+                    <option value="day">Daily</option>
+                    <option value="week">Weekly</option>
+                    <option value="month">Monthly</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="aggregationSelect">Aggregation:</label>
+                <select id="aggregationSelect" onchange="updateTimeChart()">
+                    <option value="count">Count</option>
+                    <option value="sum">Sum</option>
+                    <option value="avg">Average</option>
+                    <option value="max">Maximum</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="timeSeriesChart"></canvas>
+        </div>
+        
+        <h2>Time Series Data</h2>
+        <div class="table-container">
+            <table class="data-table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="navigation">
+            <a href="index.html">Back to All Visualizations</a>
+        </div>
+    </div>
+    
+    <script>
+        // Parse the data JSON
+        const analysisData = {{DATA_JSON}};
+        
+        // Process the time series data
+        const timeSeriesData = {
+            hourly: {},
+            daily: {},
+            weekly: {},
+            monthly: {}
+        };
+        
+        // Helper function to format dates
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Process the data for different time units
+        if (analysisData.data && Array.isArray(analysisData.data)) {
+            analysisData.data.forEach(item => {
+                const timestamp = new Date(item.key);
+                const value = item.value;
+                
+                // Process for hourly data
+                const hourKey = new Date(
+                    timestamp.getFullYear(),
+                    timestamp.getMonth(),
+                    timestamp.getDate(),
+                    timestamp.getHours()
+                ).toISOString();
+                
+                if (!timeSeriesData.hourly[hourKey]) {
+                    timeSeriesData.hourly[hourKey] = {
+                        count: 0,
+                        sum: 0,
+                        max: -Infinity,
+                        min: Infinity,
+                        values: []
+                    };
+                }
+                timeSeriesData.hourly[hourKey].count++;
+                timeSeriesData.hourly[hourKey].sum += value;
+                timeSeriesData.hourly[hourKey].max = Math.max(timeSeriesData.hourly[hourKey].max, value);
+                timeSeriesData.hourly[hourKey].min = Math.min(timeSeriesData.hourly[hourKey].min, value);
+                timeSeriesData.hourly[hourKey].values.push(value);
+                
+                // Process for daily data
+                const dayKey = new Date(
+                    timestamp.getFullYear(),
+                    timestamp.getMonth(),
+                    timestamp.getDate()
+                ).toISOString();
+                
+                if (!timeSeriesData.daily[dayKey]) {
+                    timeSeriesData.daily[dayKey] = {
+                        count: 0,
+                        sum: 0,
+                        max: -Infinity,
+                        min: Infinity,
+                        values: []
+                    };
+                }
+                timeSeriesData.daily[dayKey].count++;
+                timeSeriesData.daily[dayKey].sum += value;
+                timeSeriesData.daily[dayKey].max = Math.max(timeSeriesData.daily[dayKey].max, value);
+                timeSeriesData.daily[dayKey].min = Math.min(timeSeriesData.daily[dayKey].min, value);
+                timeSeriesData.daily[dayKey].values.push(value);
+                
+                // Similar processing for weekly and monthly data...
+                // Weekly data
+                const weekStart = new Date(timestamp);
+                weekStart.setDate(timestamp.getDate() - timestamp.getDay());
+                weekStart.setHours(0, 0, 0, 0);
+                const weekKey = weekStart.toISOString();
+                
+                if (!timeSeriesData.weekly[weekKey]) {
+                    timeSeriesData.weekly[weekKey] = {
+                        count: 0,
+                        sum: 0,
+                        max: -Infinity,
+                        min: Infinity,
+                        values: []
+                    };
+                }
+                timeSeriesData.weekly[weekKey].count++;
+                timeSeriesData.weekly[weekKey].sum += value;
+                timeSeriesData.weekly[weekKey].max = Math.max(timeSeriesData.weekly[weekKey].max, value);
+                timeSeriesData.weekly[weekKey].min = Math.min(timeSeriesData.weekly[weekKey].min, value);
+                timeSeriesData.weekly[weekKey].values.push(value);
+                
+                // Monthly data
+                const monthKey = new Date(
+                    timestamp.getFullYear(),
+                    timestamp.getMonth(),
+                    1
+                ).toISOString();
+                
+                if (!timeSeriesData.monthly[monthKey]) {
+                    timeSeriesData.monthly[monthKey] = {
+                        count: 0,
+                        sum: 0,
+                        max: -Infinity,
+                        min: Infinity,
+                        values: []
+                    };
+                }
+                timeSeriesData.monthly[monthKey].count++;
+                timeSeriesData.monthly[monthKey].sum += value;
+                timeSeriesData.monthly[monthKey].max = Math.max(timeSeriesData.monthly[monthKey].max, value);
+                timeSeriesData.monthly[monthKey].min = Math.min(timeSeriesData.monthly[monthKey].min, value);
+                timeSeriesData.monthly[monthKey].values.push(value);
+            });
+            
+            // Calculate averages
+            Object.keys(timeSeriesData).forEach(timeUnit => {
+                Object.keys(timeSeriesData[timeUnit]).forEach(key => {
+                    const entry = timeSeriesData[timeUnit][key];
+                    entry.avg = entry.sum / entry.count;
+                });
+            });
+        }
+        
+        // Chart reference
+        let timeChart;
+        
+        // Function to update the chart based on selected time unit and aggregation
+        function updateTimeChart() {
+            const timeUnit = document.getElementById('timeUnitSelect').value;
+            const aggregation = document.getElementById('aggregationSelect').value;
+            
+            // Prepare data for the selected time unit and aggregation
+            const selectedData = timeSeriesData[timeUnit];
+            const labels = [];
+            const values = [];
+            
+            // Sort the keys chronologically
+            const sortedKeys = Object.keys(selectedData).sort();
+            
+            sortedKeys.forEach(key => {
+                const entry = selectedData[key];
+                labels.push(new Date(key));
+                values.push(entry[aggregation]);
+            });
+            
+            // Update the table
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            sortedKeys.forEach(key => {
+                const entry = selectedData[key];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(key)}</td>
+                    <td>${entry[aggregation].toFixed(2)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // Destroy previous chart if it exists
+            if (timeChart) {
+                timeChart.destroy();
+            }
+            
+            // Create the chart
+            const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+            timeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `${aggregation.toUpperCase()} by ${timeUnit}`,
+                        data: values,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: timeUnit
+                            },
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: aggregation.toUpperCase()
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Traffic Data by ${timeUnit} (${aggregation})`,
+                            font: {
+                                size: 18
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${aggregation}: ${context.raw.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize the chart with default settings
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTimeChart();
+        });
+    </script>
+</body>
+</html> 
