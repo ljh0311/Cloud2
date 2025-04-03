@@ -1,138 +1,169 @@
 {% extends "base.html" %}
 
-{% block title %}Visualizations{% endblock %}
+{% block title %}Driving SG Analysis - Visualizations{% endblock %}
 
 {% block extra_css %}
 <!-- Chart.js -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
-<!-- Visualizations CSS -->
+<!-- DateRangePicker -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<!-- Leaflet for maps -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<!-- Custom CSS -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/visualizations.css') }}">
 {% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Data Visualizations</h1>
+<div class="container-fluid">
+    <h1 class="mb-4">Driving SG Data Analysis</h1>
 
-<div class="filters card">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0"><i class="fas fa-filter"></i> Visualization Filters</h5>
-            <button id="refresh-analyses-btn" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-sync-alt"></i> Refresh Analysis Files
-            </button>
-        </div>
-        <div class="row">
-            <div class="col-md-4">
-                <label for="analysis-select" class="form-label">
-                    Analysis File
-                    <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
-                       title="Select an analysis file to view its visualizations"></i>
-                </label>
-                <select id="analysis-select" class="form-select">
-                    <option value="">Select an analysis...</option>
-                </select>
+    <!-- Analysis Selection and Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-filter"></i> Analysis Controls</h5>
+                <div>
+                    <button id="refresh-analyses-btn" class="btn btn-outline-primary btn-sm me-2">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button id="export-data-btn" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
             </div>
-            <div class="col-md-4">
-                <label for="viz-type-select" class="form-label">
-                    Visualization Type
-                    <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
-                       title="Filter visualizations by type"></i>
-                </label>
-                <select id="viz-type-select" class="form-select">
-                    <option value="all">All Types</option>
-                    <option value="sentiment">Sentiment Analysis</option>
-                    <option value="trend">Trend Analysis</option>
-                    <option value="traffic">Traffic Incidents</option>
-                    <option value="location">Location Analysis</option>
-                    <option value="topic">Topic Modeling</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="timeframe-select" class="form-label">
-                    Timeframe
-                    <i class="fas fa-question-circle help-icon" data-bs-toggle="tooltip" 
-                       title="Filter data by time period"></i>
-                </label>
-                <select id="timeframe-select" class="form-select">
-                    <option value="7d">Last 7 days</option>
-                    <option value="30d" selected>Last 30 days</option>
-                    <option value="90d">Last 90 days</option>
-                    <option value="all">All time</option>
-                </select>
+
+            <div class="row g-3">
+                <!-- Analysis File Selection -->
+                <div class="col-md-4">
+                    <label for="analysis-select" class="form-label">Analysis Dataset</label>
+                    <select id="analysis-select" class="form-select">
+                        <option value="">Select analysis...</option>
+                    </select>
+                </div>
+
+                <!-- Time Range Selection -->
+                <div class="col-md-4">
+                    <label for="date-range" class="form-label">Time Range</label>
+                    <input type="text" id="date-range" class="form-control" />
+                </div>
+
+                <!-- Time Granularity -->
+                <div class="col-md-2">
+                    <label for="time-granularity" class="form-label">Granularity</label>
+                    <select id="time-granularity" class="form-select">
+                        <option value="hour">Hourly</option>
+                        <option value="day">Daily</option>
+                        <option value="week">Weekly</option>
+                        <option value="month">Monthly</option>
+                    </select>
+                </div>
+
+                <!-- Timezone -->
+                <div class="col-md-2">
+                    <label for="time-zone" class="form-label">Timezone</label>
+                    <select id="time-zone" class="form-select">
+                        <option value="Asia/Singapore">SGT</option>
+                        <option value="UTC">UTC</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Analysis File Info Section -->
-<div class="analysis-file-info" id="file-info-section" style="display: none;">
+    <!-- Analysis Summary -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Analysis Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Traffic Metrics -->
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <h6><i class="fas fa-car-crash"></i> Traffic Incidents</h6>
+                        <div class="d-flex justify-content-between">
+                            <span id="total-incidents">-</span>
+                            <span class="trend" id="incident-trend"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location Metrics -->
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <h6><i class="fas fa-map-marker-alt"></i> Active Locations</h6>
+                        <div class="d-flex justify-content-between">
+                            <span id="active-locations">-</span>
+                            <span class="trend" id="location-trend"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trend Metrics -->
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <h6><i class="fas fa-chart-line"></i> Engagement Rate</h6>
+                        <div class="d-flex justify-content-between">
+                            <span id="engagement-rate">-</span>
+                            <span class="trend" id="engagement-trend"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Topic Metrics -->
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <h6><i class="fas fa-tags"></i> Active Topics</h6>
+                        <div class="d-flex justify-content-between">
+                            <span id="active-topics">-</span>
+                            <span class="trend" id="topic-trend"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Visualizations -->
     <div class="row">
-        <div class="col-md-4">
-            <div class="info-item">
-                <span class="info-label"><i class="fas fa-file-alt me-1"></i> File:</span>
-                <span class="info-value" id="analysis-file-info">Not selected</span>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="info-item">
-                <span class="info-label"><i class="fas fa-calendar-alt me-1"></i> Created:</span>
-                <span class="info-value" id="last-updated">N/A</span>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="info-item">
-                <span class="info-label"><i class="fas fa-database me-1"></i> Dataset:</span>
-                <span class="info-value" id="dataset-info">N/A</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="loading-indicator" class="text-center my-5" style="display: none;">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-    </div>
-    <p class="mt-2">Loading visualizations...</p>
-</div>
-
-<div id="no-data-message" class="alert alert-info text-center my-5">
-    <i class="fas fa-info-circle"></i> Select an analysis file to view visualizations.
-</div>
-
-<div id="visualizations-container" style="display: none;">
-    <div class="row">
-        <!-- Sentiment Analysis -->
-        <div class="col-md-6 viz-card" data-viz-type="sentiment">
-            <div class="card">
+        <!-- Temporal Analysis -->
+        <div class="col-md-8">
+            <div class="card mb-4">
                 <div class="card-header">
-                    <i class="fas fa-smile"></i> Sentiment Distribution
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-clock"></i> Temporal Analysis</h5>
+                        <select id="temporal-metric" class="form-select form-select-sm w-auto">
+                            <option value="incidents">Traffic Incidents</option>
+                            <option value="engagement">Engagement</option>
+                            <option value="sentiment">Sentiment</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="chart-container">
-                        <canvas id="sentiment-chart"></canvas>
+                        <canvas id="temporal-heatmap"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Trend Analysis -->
-        <div class="col-md-6 viz-card" data-viz-type="trend">
-            <div class="card">
+        <!-- Location Analysis -->
+        <div class="col-md-4">
+            <div class="card mb-4">
                 <div class="card-header">
-                    <i class="fas fa-chart-line"></i> Engagement Trends
+                    <h5 class="mb-0"><i class="fas fa-map-marked-alt"></i> Location Analysis</h5>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="trend-chart"></canvas>
-                    </div>
+                    <div id="location-map" style="height: 400px;"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Traffic Incidents -->
-        <div class="col-md-6 viz-card" data-viz-type="traffic">
-            <div class="card">
+        <!-- Traffic Analysis -->
+        <div class="col-md-6">
+            <div class="card mb-4">
                 <div class="card-header">
-                    <i class="fas fa-car-crash"></i> Traffic Incidents
+                    <h5 class="mb-0"><i class="fas fa-car-crash"></i> Traffic Incidents</h5>
                 </div>
                 <div class="card-body">
                     <div class="chart-container">
@@ -142,48 +173,117 @@
             </div>
         </div>
 
-        <!-- Location Analysis -->
-        <div class="col-md-6 viz-card" data-viz-type="location">
-            <div class="card">
+        <!-- Topic Evolution -->
+        <div class="col-md-6">
+            <div class="card mb-4">
                 <div class="card-header">
-                    <i class="fas fa-map-marker-alt"></i> Location Analysis
+                    <h5 class="mb-0"><i class="fas fa-comments"></i> Topic Evolution</h5>
                 </div>
                 <div class="card-body">
                     <div class="chart-container">
-                        <canvas id="location-chart"></canvas>
+                        <canvas id="topic-evolution-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Analysis -->
+    <div class="row">
+        <!-- Hourly Patterns -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Hourly Patterns</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="hourly-pattern-chart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Topic Modeling -->
-        <div class="col-md-12 viz-card" data-viz-type="topic">
-            <div class="card">
+        <!-- Weekly Trends -->
+        <div class="col-md-6">
+            <div class="card mb-4">
                 <div class="card-header">
-                    <i class="fas fa-tags"></i> Topic Analysis
+                    <h5 class="mb-0"><i class="fas fa-calendar-week"></i> Weekly Trends</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="chart-container">
-                                <canvas id="topic-distribution-chart"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <h5 class="mb-3">Topic Keywords</h5>
-                            <div id="topic-keywords" class="border-start ps-3"></div>
-                        </div>
+                    <div class="chart-container">
+                        <canvas id="weekly-trend-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistical Analysis -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-calculator"></i> Statistical Analysis</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Correlation Analysis -->
+                <div class="col-md-6">
+                    <h6>Correlation Analysis</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="correlation-table">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Traffic</th>
+                                    <th>Engagement</th>
+                                    <th>Topics</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Filled dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Time Series Statistics -->
+                <div class="col-md-6">
+                    <h6>Time Series Statistics</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="timeseries-stats">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Mean</th>
+                                    <th>Std Dev</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Filled dynamically -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Loading Indicator -->
+<div id="loading-overlay" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-<!-- Chart.js -->
+<!-- Required Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
-<!-- Visualization JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<!-- Custom JS -->
 <script src="{{ url_for('static', filename='js/visualizations.js') }}"></script>
 {% endblock %} 

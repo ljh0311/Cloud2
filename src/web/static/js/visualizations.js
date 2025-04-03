@@ -658,4 +658,302 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.pathname.endsWith('/visualizations.html')) {
         window.vizManager = new VisualizationManager();
     }
-}); 
+});
+
+// Initialize date range picker
+$(document).ready(function() {
+    // Initialize date range picker
+    $('#date-range').daterangepicker({
+        startDate: moment().subtract(7, 'days'),
+        endDate: moment(),
+        ranges: {
+            'Today': [moment(), moment()],
+            'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+            'This Month': [moment().startOf('month'), moment().endOf('month')],
+            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+        }
+    });
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Event listeners for filter changes
+    $('#analysis-select, #viz-type-select, #timeframe-select, #date-range, #time-granularity, #time-zone').on('change', function() {
+        updateVisualizations();
+    });
+
+    // Event listener for trend metric changes
+    $('#trend-metric').on('change', function() {
+        updateTrendTimeline();
+    });
+});
+
+// Function to update all visualizations
+function updateVisualizations() {
+    const filters = getFilters();
+    showLoadingIndicator();
+    
+    // Fetch data from backend
+    fetch('/api/analysis/data?' + new URLSearchParams(filters))
+        .then(response => response.json())
+        .then(data => {
+            updateTemporalHeatmap(data.temporal);
+            updateTrendTimeline(data.trends);
+            updateTopicEvolution(data.topics);
+            updateTrafficIncidents(data.traffic);
+            updateLocationAnalysis(data.locations);
+            hideLoadingIndicator();
+        })
+        .catch(error => {
+            console.error('Error fetching analysis data:', error);
+            showError('Failed to fetch analysis data');
+            hideLoadingIndicator();
+        });
+}
+
+// Get current filter values
+function getFilters() {
+    const dateRange = $('#date-range').data('daterangepicker');
+    return {
+        analysisFile: $('#analysis-select').val(),
+        vizType: $('#viz-type-select').val(),
+        timeframe: $('#timeframe-select').val(),
+        startDate: dateRange.startDate.format('YYYY-MM-DD'),
+        endDate: dateRange.endDate.format('YYYY-MM-DD'),
+        granularity: $('#time-granularity').val(),
+        timezone: $('#time-zone').val()
+    };
+}
+
+// Temporal heatmap visualization
+function updateTemporalHeatmap(data) {
+    const ctx = document.getElementById('temporal-heatmap').getContext('2d');
+    
+    // Destroy existing chart if it exists
+    if (window.temporalHeatmap) {
+        window.temporalHeatmap.destroy();
+    }
+
+    // Create heatmap data
+    const chartData = processTemporalData(data);
+    
+    window.temporalHeatmap = new Chart(ctx, {
+        type: 'matrix',
+        data: chartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Activity Distribution by Hour and Day'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.raw.v} events`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'category',
+                    labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                    offset: true
+                },
+                x: {
+                    type: 'category',
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    offset: true
+                }
+            }
+        }
+    });
+}
+
+// Trend timeline visualization
+function updateTrendTimeline(data) {
+    const ctx = document.getElementById('trend-timeline').getContext('2d');
+    const metric = $('#trend-metric').val();
+    
+    if (window.trendTimeline) {
+        window.trendTimeline.destroy();
+    }
+
+    const chartData = processTrendData(data, metric);
+    
+    window.trendTimeline = new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: `${metric.charAt(0).toUpperCase() + metric.slice(1)} Trends Over Time`
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: $('#time-granularity').val()
+                    }
+                },
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Topic evolution visualization
+function updateTopicEvolution(data) {
+    const ctx = document.getElementById('topic-evolution-chart').getContext('2d');
+    
+    if (window.topicEvolution) {
+        window.topicEvolution.destroy();
+    }
+
+    const chartData = processTopicData(data);
+    
+    window.topicEvolution = new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Topic Evolution Over Time'
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: $('#time-granularity').val()
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    stacked: true
+                }
+            }
+        }
+    });
+
+    // Update keywords panel
+    updatePeriodKeywords(data.keywords);
+}
+
+// Helper function to process temporal data
+function processTemporalData(data) {
+    // Process raw data into heatmap format
+    return {
+        datasets: [{
+            label: 'Activity Level',
+            data: data.map(d => ({
+                x: d.hour,
+                y: d.day,
+                v: d.count
+            })),
+            backgroundColor: function(context) {
+                const value = context.dataset.data[context.dataIndex].v;
+                const alpha = Math.min(0.8, Math.max(0.1, value / context.dataset.maxValue));
+                return `rgba(54, 162, 235, ${alpha})`;
+            }
+        }]
+    };
+}
+
+// Helper function to process trend data
+function processTrendData(data, metric) {
+    return {
+        datasets: [{
+            label: metric.charAt(0).toUpperCase() + metric.slice(1),
+            data: data.map(d => ({
+                x: new Date(d.timestamp),
+                y: d[metric]
+            })),
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }]
+    };
+}
+
+// Helper function to process topic data
+function processTopicData(data) {
+    const topics = [...new Set(data.map(d => d.topic))];
+    
+    return {
+        datasets: topics.map((topic, index) => ({
+            label: topic,
+            data: data.filter(d => d.topic === topic).map(d => ({
+                x: new Date(d.timestamp),
+                y: d.weight
+            })),
+            borderColor: getTopicColor(index),
+            fill: true
+        }))
+    };
+}
+
+// Update period keywords panel
+function updatePeriodKeywords(keywords) {
+    const container = document.getElementById('period-keywords');
+    container.innerHTML = '';
+    
+    keywords.forEach(period => {
+        const periodEl = document.createElement('div');
+        periodEl.className = 'mb-3';
+        periodEl.innerHTML = `
+            <h6>${period.period}</h6>
+            <div class="keywords">
+                ${period.keywords.map(kw => `
+                    <span class="badge bg-primary me-1">${kw.term} (${kw.weight.toFixed(2)})</span>
+                `).join('')}
+            </div>
+        `;
+        container.appendChild(periodEl);
+    });
+}
+
+// Helper function to get colors for topics
+function getTopicColor(index) {
+    const colors = [
+        'rgb(255, 99, 132)',
+        'rgb(75, 192, 192)',
+        'rgb(255, 205, 86)',
+        'rgb(54, 162, 235)',
+        'rgb(153, 102, 255)',
+        'rgb(255, 159, 64)'
+    ];
+    return colors[index % colors.length];
+}
+
+// UI helper functions
+function showLoadingIndicator() {
+    $('#loading-indicator').show();
+    $('#visualizations-container').hide();
+    $('#no-data-message').hide();
+}
+
+function hideLoadingIndicator() {
+    $('#loading-indicator').hide();
+    $('#visualizations-container').show();
+}
+
+function showError(message) {
+    // Implement error display logic
+    console.error(message);
+} 
