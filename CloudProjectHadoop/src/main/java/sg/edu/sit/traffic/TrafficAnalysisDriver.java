@@ -42,31 +42,59 @@ public class TrafficAnalysisDriver {
         Configuration conf = new Configuration();
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         
-        if (otherArgs.length < 3 || otherArgs.length > 4) {
-            System.err.println("Usage: TrafficAnalysis <input> <analysis_type> <output> [output_format]");
+        if (otherArgs.length < 3) {
+            System.err.println("Usage: TrafficAnalysis <input> <analysis_type> <output_dir> [--start-time YYYY-MM-DD HH:MM] [--end-time YYYY-MM-DD HH:MM] [output_format]");
             System.err.println("Analysis types: sentiment, trend, traffic, location, topic, engagement, brands, timeframe");
             System.err.println("Output formats: default, csv, json");
             System.exit(2);
         }
 
+        // Parse all arguments
+        String inputPath = otherArgs[0];
+        String analysisType = otherArgs[1].toLowerCase();
+        String outputDir = otherArgs[2];
+        
+        // Default values
+        String startTime = null;
+        String endTime = null;
+        String outputFormat = "default";
+        
+        // Parse optional arguments
+        for (int i = 3; i < otherArgs.length; i++) {
+            if (otherArgs[i].equals("--start-time") && i + 1 < otherArgs.length) {
+                startTime = otherArgs[i + 1];
+                i++; // Skip the next argument
+            } else if (otherArgs[i].equals("--end-time") && i + 1 < otherArgs.length) {
+                endTime = otherArgs[i + 1];
+                i++; // Skip the next argument
+            } else {
+                // Assume this is the output format
+                outputFormat = otherArgs[i].toLowerCase();
+            }
+        }
+        
+        // Set timestamps in configuration if provided
+        if (startTime != null) {
+            System.out.println("Using start timestamp filter: " + startTime);
+            conf.set("analysis.timestamp.start", startTime);
+        }
+        
+        if (endTime != null) {
+            System.out.println("Using end timestamp filter: " + endTime);
+            conf.set("analysis.timestamp.end", endTime);
+        }
+
         // Clean the input JSON file first
-        String cleanedFilePath = cleanJsonDataset(otherArgs[0]);
+        String cleanedFilePath = cleanJsonDataset(inputPath);
         
         // Load properties
         Properties props = loadProperties();
         
         // Set the analysis type in configuration
-        String analysisType = otherArgs[1].toLowerCase();
         conf.set("analysis.type", analysisType);
 
-        // Get output format if specified
-        String outputFormat = "default";
-        if (otherArgs.length == 4) {
-            outputFormat = otherArgs[3].toLowerCase();
-        }
-
         // Generate output path with timestamp
-        String outputPath = generateOutputPath(otherArgs[0], analysisType);
+        String outputPath = generateOutputPath(outputDir, inputPath, analysisType);
         
         // Delete existing output directory if it exists
         deleteExistingOutput(conf, outputPath);
@@ -167,11 +195,12 @@ public class TrafficAnalysisDriver {
     
     /**
      * Generate output path with timestamp
+     * @param outputDir User-specified output directory
      * @param inputPath Original input file path
      * @param analysisType Type of analysis being performed
      * @return Generated output path
      */
-    private static String generateOutputPath(String inputPath, String analysisType) {
+    private static String generateOutputPath(String outputDir, String inputPath, String analysisType) {
         // Extract dataset name from input path
         String datasetName = new File(inputPath).getName();
         if (datasetName.contains(".")) {
@@ -184,7 +213,7 @@ public class TrafficAnalysisDriver {
         String timestamp = now.format(formatter);
         
         // Generate output path
-        return String.format("%s_%s_%s", datasetName, analysisType, timestamp);
+        return String.format("%s/%s_%s_%s", outputDir, datasetName, analysisType, timestamp);
     }
     
     /**

@@ -1177,4 +1177,446 @@ class AnalysisUI {
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', () => {
     new AnalysisUI();
+});
+
+// Hadoop Job Execution Functionality
+function initHadoopJobExecution() {
+    // File browsing buttons
+    document.getElementById('browse-input-btn').addEventListener('click', function() {
+        openFileBrowser('input');
+    });
+    
+    document.getElementById('browse-output-btn').addEventListener('click', function() {
+        openFileBrowser('output');
+    });
+    
+    // Analysis type selection
+    document.getElementById('hadoop-analysis-type').addEventListener('change', function() {
+        validateHadoopForm();
+    });
+    
+    // Submit handler modification to include Hadoop job execution
+    document.getElementById('analysis-form').addEventListener('submit', function(event) {
+        // If we're in Hadoop job mode, handle it differently
+        if (document.getElementById('hadoop-job-section').style.display !== 'none') {
+            event.preventDefault();
+            if (validateHadoopForm()) {
+                executeHadoopJob();
+            }
+        }
+    });
+    
+    // Show the right section based on a tab or option
+    const dataSourceTabs = document.querySelectorAll('input[name="data-source"]');
+    dataSourceTabs.forEach(tab => {
+        tab.addEventListener('change', function() {
+            updateDataSourceSection();
+        });
+    });
+    
+    // Add Hadoop job radio button
+    addHadoopJobOption();
+}
+
+function addHadoopJobOption() {
+    // Add a new radio button for Hadoop job execution
+    const dataSourceGroup = document.querySelector('.btn-group[role="group"][aria-label="Data source"]');
+    
+    if (dataSourceGroup) {
+        const hadoopRadio = document.createElement('input');
+        hadoopRadio.type = 'radio';
+        hadoopRadio.className = 'btn-check';
+        hadoopRadio.name = 'data-source';
+        hadoopRadio.id = 'hadoop-job-source';
+        hadoopRadio.autocomplete = 'off';
+        
+        const hadoopLabel = document.createElement('label');
+        hadoopLabel.className = 'btn btn-outline-primary';
+        hadoopLabel.htmlFor = 'hadoop-job-source';
+        hadoopLabel.innerHTML = '<i class="fas fa-cogs"></i> Run Hadoop Job';
+        
+        dataSourceGroup.appendChild(hadoopRadio);
+        dataSourceGroup.appendChild(hadoopLabel);
+    }
+}
+
+function updateDataSourceSection() {
+    const selectedSource = document.querySelector('input[name="data-source"]:checked').id;
+    
+    // Hide all sections first
+    document.getElementById('dataset-section').style.display = 'none';
+    document.getElementById('reddit-scraper-section').style.display = 'none';
+    document.getElementById('hadoop-job-section').style.display = 'none';
+    
+    // Show the selected section
+    if (selectedSource === 'dataset-source') {
+        document.getElementById('dataset-section').style.display = 'block';
+    } else if (selectedSource === 'scraper-source') {
+        document.getElementById('reddit-scraper-section').style.display = 'block';
+    } else if (selectedSource === 'hadoop-job-source') {
+        document.getElementById('hadoop-job-section').style.display = 'block';
+    }
+}
+
+function openFileBrowser(type) {
+    // Create a file input element
+    const fileInput = document.createElement('input');
+    fileInput.type = type === 'input' ? 'file' : 'text';
+    
+    if (type === 'input') {
+        fileInput.accept = '.json';
+        
+        fileInput.onchange = function() {
+            if (fileInput.files.length > 0) {
+                const filePath = fileInput.files[0].path || fileInput.value;
+                document.getElementById('hadoop-input-file').value = filePath;
+                validateHadoopForm();
+            }
+        };
+        
+        // Trigger the file browser
+        fileInput.click();
+    } else {
+        // For output directory, we need to use a directory picker
+        // Since browser APIs don't directly support this, we'll use a custom approach
+        
+        // Create a directory browser dialog using window.showDirectoryPicker()
+        // This is a modern API that might not be supported in all browsers
+        if (window.showDirectoryPicker) {
+            window.showDirectoryPicker().then(directoryHandle => {
+                // Convert the directory handle to a path
+                return directoryHandle.name;
+            }).then(directoryPath => {
+                document.getElementById('hadoop-output-dir').value = directoryPath;
+                validateHadoopForm();
+            }).catch(err => {
+                console.error('Error selecting directory:', err);
+            });
+        } else {
+            // Fallback for browsers that don't support showDirectoryPicker
+            // We'll use a server-side approach
+            fetch('/api/browse_directory', {
+                method: 'GET'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('hadoop-output-dir').value = data.path;
+                    validateHadoopForm();
+                } else {
+                    showNotification('Error selecting directory', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error calling directory browser API:', error);
+                showNotification('Error selecting directory', 'error');
+            });
+        }
+    }
+}
+
+function validateHadoopForm() {
+    const inputFile = document.getElementById('hadoop-input-file').value;
+    const analysisType = document.getElementById('hadoop-analysis-type').value;
+    const outputDir = document.getElementById('hadoop-output-dir').value;
+    
+    let isValid = true;
+    let errorMessage = '';
+    
+    if (!inputFile) {
+        isValid = false;
+        errorMessage += 'Please select an input file. ';
+    } else if (!inputFile.toLowerCase().endsWith('.json')) {
+        isValid = false;
+        errorMessage += 'Input file must be a JSON file. ';
+    }
+    
+    if (!analysisType) {
+        isValid = false;
+        errorMessage += 'Please select an analysis type. ';
+    }
+    
+    if (!outputDir) {
+        isValid = false;
+        errorMessage += 'Please select an output directory. ';
+    }
+    
+    // Show validation message if needed
+    if (!isValid && errorMessage) {
+        showNotification(errorMessage.trim(), 'error');
+    }
+    
+    return isValid;
+}
+
+function executeHadoopJob() {
+    // Show progress section
+    document.getElementById('progress-section').style.display = 'block';
+    
+    // Update progress status
+    document.getElementById('analysis-status-badge').className = 'badge bg-info';
+    document.getElementById('analysis-status-badge').innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Running Hadoop Job';
+    document.getElementById('analysis-type-indicator').textContent = 'Executing ' + document.getElementById('hadoop-analysis-type').value + ' analysis...';
+    
+    // Set steps status
+    setStepStatus('step-data-loading', 'In Progress');
+    setStepStatus('step-processing', 'Pending');
+    setStepStatus('step-generating-results', 'Pending');
+    setStepStatus('step-saving', 'Pending');
+    
+    // Reset progress bar
+    updateProgressBar(5);
+    
+    // Add initial log entry
+    appendToLog('Starting Hadoop job execution...', 'info');
+    appendToLog('Input File: ' + document.getElementById('hadoop-input-file').value, 'info');
+    appendToLog('Analysis Type: ' + document.getElementById('hadoop-analysis-type').value, 'info');
+    appendToLog('Output Directory: ' + document.getElementById('hadoop-output-dir').value, 'info');
+    
+    // Collect parameters
+    const params = {
+        input_file: document.getElementById('hadoop-input-file').value,
+        analysis_type: document.getElementById('hadoop-analysis-type').value,
+        output_dir: document.getElementById('hadoop-output-dir').value,
+        timerange_start: document.getElementById('hadoop-timerange-start').value,
+        timerange_end: document.getElementById('hadoop-timerange-end').value
+    };
+    
+    // Start the timer for elapsed time
+    startProcessingTimer();
+    
+    // Execute the Hadoop job via API
+    executeHadoopJobAPI(params);
+}
+
+function executeHadoopJobAPI(params) {
+    // This is a placeholder for the actual API call to run the Hadoop job
+    // In a real implementation, this would call a server-side endpoint
+    
+    fetch('/api/run_hadoop_job', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Handle successful job submission
+            const jobId = data.job_id;
+            appendToLog('Hadoop job submitted successfully. Job ID: ' + jobId, 'success');
+            
+            // Start polling for job status
+            pollJobStatus(jobId);
+        } else {
+            // Handle job submission failure
+            appendToLog('Failed to submit Hadoop job: ' + data.message, 'error');
+            setJobFailed(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting Hadoop job:', error);
+        appendToLog('Error submitting Hadoop job: ' + error.message, 'error');
+        setJobFailed('Network or server error');
+    });
+    
+    // For demo/testing purposes, simulate a successful job
+    simulateHadoopJob(params);
+}
+
+function simulateHadoopJob(params) {
+    // This is a simulation for testing the UI
+    // In a real implementation, this would be replaced by actual API calls
+    
+    const steps = [
+        { name: 'Loading input data', progress: 10, step: 'step-data-loading' },
+        { name: 'Preparing Hadoop job', progress: 20, step: 'step-data-loading' },
+        { name: 'Submitting to Hadoop cluster', progress: 30, step: 'step-data-loading' },
+        { name: 'Starting MapReduce job', progress: 40, step: 'step-processing' },
+        { name: 'Running Map phase', progress: 50, step: 'step-processing' },
+        { name: 'Running Reduce phase', progress: 60, step: 'step-processing' },
+        { name: 'Collecting results', progress: 70, step: 'step-generating-results' },
+        { name: 'Generating visualizations', progress: 80, step: 'step-generating-results' },
+        { name: 'Saving output files', progress: 90, step: 'step-saving' },
+        { name: 'Finalizing', progress: 100, step: 'step-saving' }
+    ];
+    
+    let currentStep = 0;
+    
+    function processNextStep() {
+        if (currentStep < steps.length) {
+            const step = steps[currentStep];
+            
+            // Update progress
+            updateProgressBar(step.progress);
+            appendToLog(step.name + '...', 'info');
+            
+            // Update current step status
+            setStepStatus(step.step, 'In Progress');
+            
+            // If moving to a new step, mark previous as complete
+            if (currentStep > 0 && steps[currentStep-1].step !== step.step) {
+                setStepStatus(steps[currentStep-1].step, 'Complete');
+            }
+            
+            // Update processed items count for demonstration
+            document.getElementById('processed-items').textContent = Math.floor(currentStep * 200);
+            
+            // Update processing rate
+            document.getElementById('processing-rate').textContent = Math.floor(10 + Math.random() * 40) + '/sec';
+            
+            currentStep++;
+            
+            // Schedule next step
+            setTimeout(processNextStep, 1000 + Math.random() * 1000);
+        } else {
+            // Job complete
+            setJobComplete();
+        }
+    }
+    
+    // Start the simulation
+    setTimeout(processNextStep, 1000);
+}
+
+function pollJobStatus(jobId) {
+    // This function would poll a server-side endpoint for job status updates
+    // It's a placeholder for the actual implementation
+    console.log('Polling job status for job ID:', jobId);
+}
+
+function setJobComplete() {
+    // Stop the timer
+    stopProcessingTimer();
+    
+    // Update UI elements
+    document.getElementById('analysis-status-badge').className = 'badge bg-success';
+    document.getElementById('analysis-status-badge').innerHTML = '<i class="fas fa-check-circle"></i> Complete';
+    document.getElementById('analysis-type-indicator').textContent = 'Analysis completed successfully';
+    
+    // Mark all steps as complete
+    setStepStatus('step-data-loading', 'Complete');
+    setStepStatus('step-processing', 'Complete');
+    setStepStatus('step-generating-results', 'Complete');
+    setStepStatus('step-saving', 'Complete');
+    
+    // Set progress to 100%
+    updateProgressBar(100);
+    
+    // Add success log entry
+    appendToLog('Hadoop job completed successfully!', 'success');
+    
+    // Show results section
+    document.getElementById('analysis-results').style.display = 'block';
+}
+
+function setJobFailed(message) {
+    // Stop the timer
+    stopProcessingTimer();
+    
+    // Update UI elements
+    document.getElementById('analysis-status-badge').className = 'badge bg-danger';
+    document.getElementById('analysis-status-badge').innerHTML = '<i class="fas fa-exclamation-circle"></i> Failed';
+    document.getElementById('analysis-type-indicator').textContent = 'Analysis failed: ' + message;
+    
+    // Add error log entry
+    appendToLog('Hadoop job failed: ' + message, 'error');
+}
+
+function setStepStatus(stepId, status) {
+    const step = document.getElementById(stepId);
+    const statusElement = step.querySelector('.step-status');
+    
+    // Remove any existing status classes
+    step.classList.remove('active', 'complete', 'error');
+    
+    switch (status) {
+        case 'Pending':
+            statusElement.textContent = 'Pending';
+            break;
+        case 'In Progress':
+            statusElement.textContent = 'In Progress';
+            step.classList.add('active');
+            break;
+        case 'Complete':
+            statusElement.textContent = 'Complete';
+            step.classList.add('complete');
+            break;
+        case 'Error':
+            statusElement.textContent = 'Error';
+            step.classList.add('error');
+            break;
+    }
+}
+
+function updateProgressBar(percentage) {
+    const progressBar = document.querySelector('.progress-bar');
+    const progressPercentage = document.getElementById('progress-percentage');
+    
+    progressBar.style.width = percentage + '%';
+    progressPercentage.textContent = percentage + '%';
+}
+
+function appendToLog(message, type) {
+    const logContainer = document.getElementById('analysis-log');
+    const timestamp = new Date().toLocaleTimeString();
+    
+    const logEntry = document.createElement('div');
+    logEntry.className = 'log-entry log-' + type;
+    logEntry.innerHTML = `<span class="log-time">[${timestamp}]</span> ${message}`;
+    
+    logContainer.appendChild(logEntry);
+    logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+let processingTimer;
+let startTime;
+
+function startProcessingTimer() {
+    startTime = new Date();
+    
+    processingTimer = setInterval(function() {
+        const currentTime = new Date();
+        const elapsedMilliseconds = currentTime - startTime;
+        
+        // Format elapsed time as MM:SS
+        const minutes = Math.floor(elapsedMilliseconds / 60000);
+        const seconds = Math.floor((elapsedMilliseconds % 60000) / 1000);
+        
+        document.getElementById('processing-time').textContent = 
+            minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+            
+        // Update estimated completion time (simple estimation for demo)
+        const progress = parseFloat(document.querySelector('.progress-bar').style.width);
+        if (progress > 0 && progress < 100) {
+            const totalTimeEstimate = (elapsedMilliseconds * 100) / progress;
+            const remainingTime = totalTimeEstimate - elapsedMilliseconds;
+            
+            // Only show if we have a reasonable estimate
+            if (remainingTime > 0) {
+                const completionTime = new Date(currentTime.getTime() + remainingTime);
+                document.getElementById('completion-estimate').textContent = 
+                    completionTime.toLocaleTimeString();
+            }
+        }
+    }, 1000);
+}
+
+function stopProcessingTimer() {
+    if (processingTimer) {
+        clearInterval(processingTimer);
+    }
+}
+
+// Initialize Hadoop job execution features when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize existing functionality first
+    // ...
+    
+    // Then initialize Hadoop job functionality
+    initHadoopJobExecution();
+    
+    // Update the data source section initially
+    updateDataSourceSection();
 }); 

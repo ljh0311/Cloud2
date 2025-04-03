@@ -1,0 +1,93 @@
+{
+  "data": [
+    {
+      "value": 2682,
+      "key": "keyword:car"
+    },
+    {
+      "value": 1046,
+      "key": "keyword:driving"
+    },
+    {
+      "value": 820,
+      "key": "keyword:road"
+    },
+    {
+      "value": 820,
+      "key": "school:road"
+    },
+    {
+      "value": 552,
+      "key": "keyword:traffic"
+    },
+    {
+      "value": 543,
+      "key": "keyword:driver"
+    },
+    {
+      "value": 470,
+      "key": "keyword:bike"
+    },
+    {
+      "value": 439,
+      "key": "school:private"
+    },
+    {
+      "value": 419,
+      "key": "keyword:test"
+    },
+    {
+      "value": 419,
+      "key": "school:test"
+    }
+  ],
+  "analysis_type": "traffic",
+  "output_path": "drivingsg_data_20250318_143009_traffic_20250403_183910",
+  "categories": {
+    "school": [
+      {
+        "value": 820,
+        "key": "school:road"
+      },
+      {
+        "value": 439,
+        "key": "school:private"
+      },
+      {
+        "value": 419,
+        "key": "school:test"
+      }
+    ],
+    "keyword": [
+      {
+        "value": 2682,
+        "key": "keyword:car"
+      },
+      {
+        "value": 1046,
+        "key": "keyword:driving"
+      },
+      {
+        "value": 820,
+        "key": "keyword:road"
+      },
+      {
+        "value": 552,
+        "key": "keyword:traffic"
+      },
+      {
+        "value": 543,
+        "key": "keyword:driver"
+      },
+      {
+        "value": 470,
+        "key": "keyword:bike"
+      },
+      {
+        "value": 419,
+        "key": "keyword:test"
+      }
+    ]
+  },
+  "timestamp": "2025-04-03 18:39:12"
+}

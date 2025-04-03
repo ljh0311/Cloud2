@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Singapore Traffic Analysis Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+    .metric-card {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background: #fff;
+        box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+        margin-bottom: 1rem;
+    }
+    .trend-up { color: #28a745; }
+    .trend-down { color: #dc3545; }
+    .chart-container { position: relative; height: 300px; width: 100%; }
+    #location-map { height: 400px; border-radius: 0.5rem; }
+    .severity-high { color: #dc3545; }
+    .severity-medium { color: #ffc107; }
+    .severity-low { color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Singapore Traffic Analysis Dashboard</h1>
+            <div class="btn-group">
+                <button id="refresh-data" class="btn btn-outline-primary">
+                    <i class="fas fa-sync-alt"></i> Refresh Data
+                </button>
+                <button id="export-data" class="btn btn-outline-success">
+                    <i class="fas fa-download"></i> Export Report
+                </button>
+            </div>
+        </div>
+    
+        <!-- Analysis Controls -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="dataset-select" class="form-label">Analysis Dataset</label>
+                        <select id="dataset-select" class="form-select">
+                            <option value="">Select dataset...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="date-range" class="form-label">Time Range</label>
+                        <input type="text" id="date-range" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label for="analysis-type" class="form-label">Analysis Type</label>
+                        <select id="analysis-type" class="form-select">
+                            <option value="all">All Analysis</option>
+                            <option value="location">Location Analysis</option>
+                            <option value="traffic">Traffic Incidents</option>
+                            <option value="sentiment">Sentiment Analysis</option>
+                            <option value="trends">Trend Analysis</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Summary Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6><i class="fas fa-map-marker-alt"></i> Total Locations</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 id="total-locations">-</h3>
+                        <span id="location-trend" class="trend"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6><i class="fas fa-car-crash"></i> Traffic Incidents</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 id="total-incidents">-</h3>
+                        <span id="incident-trend" class="trend"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6><i class="fas fa-smile"></i> Sentiment Score</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 id="sentiment-score">-</h3>
+                        <span id="sentiment-trend" class="trend"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <h6><i class="fas fa-chart-line"></i> Top Trend</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 id="top-trend">-</h3>
+                        <span id="trend-change" class="trend"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Main Analysis Section -->
+        <div class="row">
+            <!-- Map View -->
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-map-marked-alt"></i> Traffic Incident Map</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="location-map"></div>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Sentiment Analysis -->
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-heart"></i> Public Sentiment</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="sentiment-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <div class="row">
+            <!-- Traffic Trends -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-line"></i> Traffic Trends</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="trends-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Brand Analysis -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-car"></i> Vehicle Brand Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="brands-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Detailed Analysis -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-table"></i> Detailed Analysis</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="analysis-table">
+                        <thead>
+                            <tr>
+                                <th>Location</th>
+                                <th>Incidents</th>
+                                <th>Severity</th>
+                                <th>Sentiment</th>
+                                <th>Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filled dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Initialize map
+        const map = L.map('location-map').setView([1.3521, 103.8198], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Initialize charts
+        const sentimentChart = new Chart(document.getElementById('sentiment-chart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive', 'Neutral', 'Negative'],
+                datasets: [{
+                    data: [0, 0, 0],
+                    backgroundColor: ['#28a745', '#6c757d', '#dc3545']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        const trendsChart = new Chart(document.getElementById('trends-chart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        const brandsChart = new Chart(document.getElementById('brands-chart'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Mentions',
+                    data: [],
+                    backgroundColor: '#007bff'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Load and update data
+        async function loadData(folderId) {
+            try {
+                document.getElementById('refresh-data').disabled = true;
+                document.getElementById('refresh-data').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+                
+                // Load all analysis files for the selected folder
+                const analyses = {};
+                
+                const possiblePaths = [
+                    `../data/${folderId}/summary.json`,
+                    `../../data/analysis/${folderId}/visualization/summary.json`, 
+                    `../../data/analysis/${folderId}/summary.json`,
+                    `../../../data/analysis/${folderId}/visualization/summary.json`,
+                    `../../../data/analysis/${folderId}/summary.json`
+                ];
+                
+                let data = null;
+                
+                // Try each path until one works
+                for (const path of possiblePaths) {
+                    try {
+                        console.log('Trying to load data from:', path);
+                        const response = await fetch(path);
+                        if (response.ok) {
+                            data = await response.json();
+                            console.log('Successfully loaded data from:', path);
+                            break;
+                        }
+                    } catch (error) {
+                        console.log(`Failed to load from ${path}:`, error);
+                    }
+                }
+                
+                if (data) {
+                    // Since all analysis types are in one file
+                    analyses.location = data;
+                    analyses.traffic = data;
+                    analyses.sentiment = data;
+                    analyses.trend = data;
+                    analyses.brands = data;
+                    
+                    updateDashboard(analyses);
+                } else {
+                    throw new Error('Could not load data from any of the attempted paths');
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                alert(`Error: ${error.message}`);
+            } finally {
+                document.getElementById('refresh-data').disabled = false;
+                document.getElementById('refresh-data').innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Data';
+            }
+        }
+
+        function updateDashboard(data) {
+            console.log('Data:', data);
+            
+            // Process location data
+            if (data.location) {
+                // Get location data
+                const locationData = data.location.data || [];
+                
+                // Calculate total incidents
+                const totalIncidents = locationData.reduce((sum, item) => sum + item.value, 0);
+                document.getElementById('total-locations').textContent = totalIncidents;
+                
+                // Update map
+                map.eachLayer((layer) => {
+                    if (layer instanceof L.Marker) {
+                        map.removeLayer(layer);
+                    }
+                });
+                
+                // Create markers for each location
+                locationData.forEach(item => {
+                    const locationName = item.key.replace('location:', '');
+                    const count = item.value;
+                    const coords = getCoordinates(locationName);
+                    
+                    if (coords) {
+                        const marker = L.marker([coords.lat, coords.lng])
+                            .bindPopup(`
+                                <strong>${locationName}</strong><br>
+                                Incidents: ${count}<br>
+                                ${coords.description}
+                            `)
+                            .addTo(map);
+                    }
+                });
+            }
+            
+            // Process traffic data
+            if (data.traffic) {
+                const trafficData = data.traffic.data || [];
+                const totalTraffic = trafficData.reduce((sum, item) => sum + item.value, 0);
+                document.getElementById('total-incidents').textContent = totalTraffic;
+            }
+            
+            // Process sentiment data
+            if (data.sentiment) {
+                const sentimentData = data.sentiment.data || [];
+                const total = sentimentData.reduce((sum, item) => sum + item.value, 0);
+                
+                // Process sentiment data
+                const processedSentiment = sentimentData.map(item => {
+                    const sentiment = item.key.replace('sentiment:', '');
+                    return {
+                        sentiment,
+                        count: item.value,
+                        percentage: Math.round((item.value / total) * 100)
+                    };
+                });
+                
+                // Update sentiment chart
+                sentimentChart.data.datasets[0].data = [
+                    processedSentiment.find(s => s.sentiment === 'positive')?.count || 0,
+                    processedSentiment.find(s => s.sentiment === 'neutral')?.count || 0,
+                    processedSentiment.find(s => s.sentiment === 'negative')?.count || 0
+                ];
+                sentimentChart.update();
+                
+                // Update sentiment score
+                const positivePercentage = processedSentiment.find(s => s.sentiment === 'positive')?.percentage || 0;
+                document.getElementById('sentiment-score').textContent = `${positivePercentage}%`;
+            }
+            
+            // Process trend data
+            if (data.trend) {
+                const trendData = data.trend.data || [];
+                
+                // Extract keyword from trend data
+                const processedTrends = trendData.map(item => {
+                    const parts = item.key.split(':');
+                    return {
+                        category: parts[0],
+                        keyword: parts.length > 1 ? parts[1] : item.key,
+                        count: item.value
+                    };
+                }).sort((a, b) => b.count - a.count).slice(0, 10);
+                
+                // Update trends chart
+                trendsChart.data.labels = processedTrends.map(t => t.keyword);
+                trendsChart.data.datasets = [{
+                    label: 'Mentions',
+                    data: processedTrends.map(t => t.count),
+                    borderColor: '#007bff',
+                    tension: 0.1
+                }];
+                trendsChart.update();
+                
+                // Update top trend
+                if (processedTrends.length > 0) {
+                    document.getElementById('top-trend').textContent = processedTrends[0].keyword;
+                }
+            }
+            
+            // Process brands data
+            if (data.brands) {
+                const brandData = data.brands.data || [];
+                
+                // Extract brand info
+                const processedBrands = brandData.map(item => {
+                    const parts = item.key.split(':');
+                    return {
+                        type: parts[0],
+                        brand: parts.length > 1 ? parts[1] : item.key,
+                        count: item.value
+                    };
+                }).sort((a, b) => b.count - a.count).slice(0, 10);
+                
+                // Update brands chart
+                brandsChart.data.labels = processedBrands.map(b => b.brand);
+                brandsChart.data.datasets[0].data = processedBrands.map(b => b.count);
+                brandsChart.update();
+            }
+            
+            // Update analysis table
+            updateAnalysisTable(data);
+        }
+
+        function updateAnalysisTable(data) {
+            const tableBody = document.getElementById('analysis-table').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = '';
+            
+            if (!data.location || !data.location.data) return;
+            
+            // Get sentiment data
+            let sentimentData = [];
+            if (data.sentiment && data.sentiment.data) {
+                const sentimentItems = data.sentiment.data;
+                const total = sentimentItems.reduce((sum, item) => sum + item.value, 0);
+                
+                sentimentData = sentimentItems.map(item => {
+                    const sentiment = item.key.replace('sentiment:', '');
+                    return {
+                        sentiment,
+                        count: item.value,
+                        percentage: Math.round((item.value / total) * 100)
+                    };
+                });
+            }
+            
+            // Create table rows for each location
+            data.location.data.forEach(item => {
+                const locationName = item.key.replace('location:', '');
+                const count = item.value;
+                
+                const row = tableBody.insertRow();
+                const sentiment = sentimentData.find(s => s.sentiment === 'positive')?.percentage || 0;
+                
+                row.innerHTML = `
+                    <td>${locationName}</td>
+                    <td>${count}</td>
+                    <td><span class="severity-${count > 100 ? 'high' : count > 50 ? 'medium' : 'low'}">${count > 100 ? 'High' : count > 50 ? 'Medium' : 'Low'}</span></td>
+                    <td>${sentiment}%</td>
+                    <td><i class="fas fa-arrow-${sentiment > 50 ? 'up trend-up' : 'down trend-down'}"></i></td>
+                `;
+            });
+        }
+
+        // Helper function to get coordinates
+        function getCoordinates(location) {
+            const locationMap = {
+                'cte': { lat: 1.3521, lng: 103.8198, description: 'Central Expressway' },
+                'changi': { lat: 1.3644, lng: 103.9915, description: 'Changi Area' },
+                'sle': { lat: 1.3889, lng: 103.8516, description: 'Seletar Expressway' },
+                'pie': { lat: 1.3404, lng: 103.7717, description: 'Pan Island Expressway' },
+                'aye': { lat: 1.2789, lng: 103.7577, description: 'Ayer Rajah Expressway' },
+                'woodlands': { lat: 1.4382, lng: 103.7891, description: 'Woodlands Area' },
+                'tampines': { lat: 1.3496, lng: 103.9568, description: 'Tampines Area' },
+                'amk': { lat: 1.3691, lng: 103.8454, description: 'Ang Mo Kio Area' },
+                'tpe': { lat: 1.3666, lng: 103.8877, description: 'Tampines Expressway' },
+                'bke': { lat: 1.3801, lng: 103.7740, description: 'Bukit Timah Expressway' }
+            };
+            
+            return locationMap[location.toLowerCase()] || { lat: 1.3521, lng: 103.8198, description: 'Singapore' };
+        }
+
+        // Load the analysis folders
+        async function loadAnalysisFolders() {
+            try {
+                const possiblePaths = [
+                    '../data/datasets.json',
+                    '../../data/web/visualizations/data/analyses_index.json',
+                    '../../../data/web/visualizations/data/analyses_index.json',
+                    './data/datasets.json'
+                ];
+                
+                let response;
+                let data;
+                
+                // Try each path until one works
+                for (const path of possiblePaths) {
+                    try {
+                        console.log('Trying to fetch from:', path);
+                        response = await fetch(path);
+                        if (response.ok) {
+                            data = await response.json();
+                            console.log('Successfully loaded from:', path);
+                            break;
+                        }
+                    } catch (e) {
+                        console.log('Failed to load from:', path, e);
+                    }
+                }
+                
+                if (!data) {
+                    throw new Error('Failed to load datasets from any of the attempted paths');
+                }
+                
+                // Process data based on its format
+                let foldersList = [];
+                
+                // Handle datasets.json format
+                if (data.datasets) {
+                    foldersList = data.datasets.map(d => d.id);
+                } 
+                // Handle analyses_index.json format
+                else if (data.analyses) {
+                    // Group analyses by dataset
+                    const datasetGroups = {};
+                    data.analyses.forEach(analysis => {
+                        if (!datasetGroups[analysis.dataset]) {
+                            datasetGroups[analysis.dataset] = analysis.id;
+                        }
+                    });
+                    foldersList = Object.values(datasetGroups);
+                }
+                
+                const select = document.getElementById('dataset-select');
+                select.innerHTML = '<option value="">Select dataset...</option>';
+                
+                // Add to dropdown directly
+                foldersList.forEach(folder => {
+                    const option = document.createElement('option');
+                    option.value = folder;
+                    option.textContent = folder;
+                    select.appendChild(option);
+                });
+                
+                // Load first dataset
+                if (select.options.length > 1) {
+                    select.selectedIndex = 1;
+                    loadData(select.value);
+                }
+            } catch (error) {
+                console.error('Error loading analysis folders:', error);
+                alert(`Error loading analysis folders: ${error.message}\n\nPlease run the update_index.bat script in the data/analysis folder and make sure the analyses_index.json file exists.`);
+            }
+        }
+
+        // Format date helper
+        function formatDate(dateString) {
+            if (dateString.includes('_')) {
+                const parts = dateString.split('_');
+                if (parts.length >= 2) {
+                    const date = parts[0];
+                    const time = parts[1];
+                    return `${date.substring(0,4)}-${date.substring(4,6)}-${date.substring(6,8)} ${time.substring(0,2)}:${time.substring(2,4)}`;
+                }
+            }
+            return dateString;
+        }
+
+        // Event listeners
+        document.getElementById('dataset-select').addEventListener('change', function() {
+            if (this.value) {
+                loadData(this.value);
+            }
+        });
+
+        document.getElementById('refresh-data').addEventListener('click', function() {
+            if (confirm('This will refresh all dataset information. Continue?')) {
+                // First try to clear any cache
+                console.log('Refreshing datasets...');
+                
+                // Try to bust cache on the index file
+                const cacheBuster = new Date().getTime();
+                const possiblePaths = [
+                    `../data/datasets.json?t=${cacheBuster}`,
+                    `../../data/web/visualizations/data/analyses_index.json?t=${cacheBuster}`,
+                    `../../../data/web/visualizations/data/analyses_index.json?t=${cacheBuster}`
+                ];
+                
+                // Force a reload by trying these paths with a cache buster
+                Promise.all(possiblePaths.map(path => 
+                    fetch(path, { cache: 'no-store' })
+                        .then(resp => console.log(`Tried refreshing ${path}: ${resp.status}`))
+                        .catch(err => console.log(`Error refreshing ${path}: ${err}`))
+                )).finally(() => {
+                    // Now reload the data
+                    loadAnalysisFolders();
+                });
+            }
+        });
+
+        // Initialize
+        loadAnalysisFolders();
+    </script>
+</body>
+</html> 

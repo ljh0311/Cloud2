@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Path Test for Traffic Analysis</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow: auto; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Path Testing Tool</h1>
+    <p>This tool checks if your data files can be accessed from the browser.</p>
+    
+    <h2>1. Run the Update Index Script</h2>
+    <p>First, make sure you've run the update_index.bat file in your data/analysis folder.</p>
+    
+    <h2>2. Test Access to Index File</h2>
+    <button id="test-index">Test Index File Access</button>
+    <div id="index-result"></div>
+    
+    <h2>3. Preview Directory Structure</h2>
+    <p>Browser path relative to this file:</p>
+    <pre id="browser-path"></pre>
+    
+    <h2>4. Check All Analysis Folders</h2>
+    <button id="check-analyses">Check All Analysis Folders</button>
+    <div id="analyses-result"></div>
+    
+    <script>
+        // Display current path
+        document.getElementById('browser-path').textContent = window.location.pathname;
+        
+        // Test index file
+        document.getElementById('test-index').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('index-result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const paths = [
+                    '../web/visualizations/data/analyses_index.json',
+                    '../../data/web/visualizations/data/analyses_index.json',
+                    '../../../data/web/visualizations/data/analyses_index.json',
+                    './visualizations/data/analyses_index.json'
+                ];
+                
+                let foundPath = null;
+                let fileContent = null;
+                
+                for (const path of paths) {
+                    try {
+                        const response = await fetch(path);
+                        if (response.ok) {
+                            fileContent = await response.json();
+                            foundPath = path;
+                            break;
+                        }
+                    } catch (e) {
+                        console.log(`Path ${path} failed:`, e);
+                    }
+                }
+                
+                if (foundPath) {
+                    resultDiv.innerHTML = `<div class="success">SUCCESS! Index file found at: ${foundPath}</div>
+                        <p>Found ${fileContent.count} analyses.</p>
+                        <pre>${JSON.stringify(fileContent, null, 2).substring(0, 500)}...</pre>`;
+                        
+                    // Store the working path for other tests
+                    window.workingPath = foundPath.substring(0, foundPath.lastIndexOf('/'));
+                } else {
+                    resultDiv.innerHTML = `<div class="error">ERROR: Could not find index file in any of these paths:</div>
+                        <ul>${paths.map(p => `<li>${p}</li>`).join('')}</ul>
+                        <p>Please make sure you've run update_index.bat and the file exists.</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">ERROR: ${error.message}</div>`;
+            }
+        });
+        
+        // Check all analysis folders
+        document.getElementById('check-analyses').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('analyses-result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            if (!window.workingPath) {
+                resultDiv.innerHTML = '<div class="error">Please test the index file first to determine the working path.</div>';
+                return;
+            }
+            
+            try {
+                // Get index file
+                const indexPath = window.workingPath + '/analyses_index.json';
+                const indexResponse = await fetch(indexPath);
+                const indexData = await indexResponse.json();
+                
+                // Test each analysis file
+                const results = [];
+                let success = 0;
+                let failed = 0;
+                
+                for (const analysis of indexData.analyses) {
+                    try {
+                        // Try different path combinations
+                        const basePath = '../../../data/analysis/';
+                        const response = await fetch(basePath + analysis.summary_file);
+                        
+                        if (response.ok) {
+                            results.push(`<li class="success">${analysis.analysis_type}: OK</li>`);
+                            success++;
+                        } else {
+                            results.push(`<li class="error">${analysis.analysis_type}: Failed (${response.status})</li>`);
+                            failed++;
+                        }
+                    } catch (error) {
+                        results.push(`<li class="error">${analysis.analysis_type}: Error - ${error.message}</li>`);
+                        failed++;
+                    }
+                }
+                
+                resultDiv.innerHTML = `
+                    <div class="${success > 0 && failed === 0 ? 'success' : 'error'}">
+                        Tested ${success + failed} analysis files: ${success} successful, ${failed} failed
+                    </div>
+                    <ul>${results.join('')}</ul>
+                    <div>For the visualizations.html file, use these paths:</div>
+                    <pre>Index file: ${indexPath}
+Analysis files: ${basePath}{analysis.summary_file}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">ERROR: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html> 

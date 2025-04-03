@@ -1,0 +1,855 @@
+{
+  "data": [
+    {
+      "value": 135,
+      "key": "total:fit"
+    },
+    {
+      "value": 135,
+      "key": "brand:fit"
+    },
+    {
+      "value": 119,
+      "key": "brand_comment:fit"
+    },
+    {
+      "value": 99,
+      "key": "total:ford"
+    },
+    {
+      "value": 99,
+      "key": "total:mini"
+    },
+    {
+      "value": 99,
+      "key": "brand:ford"
+    },
+    {
+      "value": 99,
+      "key": "brand:mini"
+    },
+    {
+      "value": 98,
+      "key": "total:honda"
+    },
+    {
+      "value": 98,
+      "key": "brand:honda"
+    },
+    {
+      "value": 91,
+      "key": "brand_comment:ford"
+    },
+    {
+      "value": 90,
+      "key": "brand_comment:mini"
+    },
+    {
+      "value": 90,
+      "key": "total:toyota"
+    },
+    {
+      "value": 90,
+      "key": "brand:toyota"
+    },
+    {
+      "value": 86,
+      "key": "total:bmw"
+    },
+    {
+      "value": 86,
+      "key": "brand:bmw"
+    },
+    {
+      "value": 83,
+      "key": "brand_comment:honda"
+    },
+    {
+      "value": 83,
+      "key": "brand_comment:toyota"
+    },
+    {
+      "value": 81,
+      "key": "total:mazda"
+    },
+    {
+      "value": 81,
+      "key": "brand:mazda"
+    },
+    {
+      "value": 80,
+      "key": "brand_comment:bmw"
+    },
+    {
+      "value": 73,
+      "key": "brand_comment:mazda"
+    },
+    {
+      "value": 69,
+      "key": "total:tesla"
+    },
+    {
+      "value": 69,
+      "key": "brand:tesla"
+    },
+    {
+      "value": 65,
+      "key": "brand_comment:tesla"
+    },
+    {
+      "value": 61,
+      "key": "total:kia"
+    },
+    {
+      "value": 61,
+      "key": "brand:kia"
+    },
+    {
+      "value": 59,
+      "key": "brand_comment:kia"
+    },
+    {
+      "value": 49,
+      "key": "total:jazz"
+    },
+    {
+      "value": 49,
+      "key": "brand:jazz"
+    },
+    {
+      "value": 46,
+      "key": "brand_comment:jazz"
+    },
+    {
+      "value": 46,
+      "key": "total:porsche"
+    },
+    {
+      "value": 45,
+      "key": "brand_comment:porsche"
+    },
+    {
+      "value": 35,
+      "key": "total:altis"
+    },
+    {
+      "value": 35,
+      "key": "total:mercedes"
+    },
+    {
+      "value": 33,
+      "key": "brand_comment:mercedes"
+    },
+    {
+      "value": 33,
+      "key": "total:vezel"
+    },
+    {
+      "value": 32,
+      "key": "brand_comment:altis"
+    },
+    {
+      "value": 30,
+      "key": "total:accord"
+    },
+    {
+      "value": 30,
+      "key": "total:corolla"
+    },
+    {
+      "value": 29,
+      "key": "total:vios"
+    },
+    {
+      "value": 28,
+      "key": "brand_comment:corolla"
+    },
+    {
+      "value": 28,
+      "key": "brand_comment:vios"
+    },
+    {
+      "value": 27,
+      "key": "brand_comment:vezel"
+    },
+    {
+      "value": 26,
+      "key": "brand_comment:accord"
+    },
+    {
+      "value": 26,
+      "key": "total:hyundai"
+    },
+    {
+      "value": 24,
+      "key": "brand_comment:hyundai"
+    },
+    {
+      "value": 24,
+      "key": "total:civic"
+    },
+    {
+      "value": 24,
+      "key": "total:golf"
+    },
+    {
+      "value": 24,
+      "key": "total:audi"
+    },
+    {
+      "value": 23,
+      "key": "brand_comment:audi"
+    },
+    {
+      "value": 23,
+      "key": "brand_comment:golf"
+    },
+    {
+      "value": 23,
+      "key": "brand_comment:nissan"
+    },
+    {
+      "value": 23,
+      "key": "total:nissan"
+    },
+    {
+      "value": 22,
+      "key": "brand_comment:civic"
+    },
+    {
+      "value": 22,
+      "key": "total:subaru"
+    },
+    {
+      "value": 19,
+      "key": "brand_comment:subaru"
+    },
+    {
+      "value": 19,
+      "key": "total:attrage"
+    },
+    {
+      "value": 18,
+      "key": "brand_comment:attrage"
+    },
+    {
+      "value": 18,
+      "key": "total:a3"
+    },
+    {
+      "value": 16,
+      "key": "brand_comment:lexus"
+    },
+    {
+      "value": 16,
+      "key": "total:lexus"
+    },
+    {
+      "value": 15,
+      "key": "brand_comment:a3"
+    },
+    {
+      "value": 15,
+      "key": "total:camry"
+    },
+    {
+      "value": 14,
+      "key": "brand_comment:camry"
+    },
+    {
+      "value": 12,
+      "key": "total:lancer"
+    },
+    {
+      "value": 11,
+      "key": "brand_comment:lancer"
+    },
+    {
+      "value": 11,
+      "key": "total:volkswagen"
+    },
+    {
+      "value": 11,
+      "key": "total:freed"
+    },
+    {
+      "value": 10,
+      "key": "brand_comment:freed"
+    },
+    {
+      "value": 10,
+      "key": "brand_comment:volkswagen"
+    },
+    {
+      "value": 10,
+      "key": "brand_comment:volvo"
+    },
+    {
+      "value": 10,
+      "key": "total:volvo"
+    },
+    {
+      "value": 7,
+      "key": "total:perodua"
+    },
+    {
+      "value": 6,
+      "key": "brand_comment:bentley"
+    },
+    {
+      "value": 6,
+      "key": "total:mitsubishi"
+    },
+    {
+      "value": 6,
+      "key": "total:bentley"
+    },
+    {
+      "value": 5,
+      "key": "brand_comment:ferrari"
+    },
+    {
+      "value": 5,
+      "key": "brand_comment:mitsubishi"
+    },
+    {
+      "value": 5,
+      "key": "brand_comment:perodua"
+    },
+    {
+      "value": 5,
+      "key": "total:ferrari"
+    },
+    {
+      "value": 3,
+      "key": "brand_comment:a4"
+    },
+    {
+      "value": 3,
+      "key": "brand_comment:proton"
+    },
+    {
+      "value": 3,
+      "key": "total:proton"
+    },
+    {
+      "value": 3,
+      "key": "total:a4"
+    },
+    {
+      "value": 2,
+      "key": "brand_comment:chevrolet"
+    },
+    {
+      "value": 2,
+      "key": "brand_comment:jaguar"
+    },
+    {
+      "value": 2,
+      "key": "brand_comment:rolls"
+    },
+    {
+      "value": 2,
+      "key": "total:saga"
+    },
+    {
+      "value": 2,
+      "key": "total:mazda3"
+    },
+    {
+      "value": 2,
+      "key": "total:chevrolet"
+    },
+    {
+      "value": 2,
+      "key": "total:rolls"
+    },
+    {
+      "value": 2,
+      "key": "total:jaguar"
+    },
+    {
+      "value": 1,
+      "key": "brand_comment:cclass"
+    },
+    {
+      "value": 1,
+      "key": "brand_comment:cx5"
+    },
+    {
+      "value": 1,
+      "key": "brand_comment:land"
+    },
+    {
+      "value": 1,
+      "key": "brand_comment:maserati"
+    },
+    {
+      "value": 1,
+      "key": "brand_comment:mazda3"
+    },
+    {
+      "value": 1,
+      "key": "brand_comment:myvi"
+    },
+    {
+      "value": 1,
+      "key": "brand_comment:saga"
+    },
+    {
+      "value": 1,
+      "key": "total:maserati"
+    },
+    {
+      "value": 1,
+      "key": "total:cclass"
+    },
+    {
+      "value": 1,
+      "key": "total:cx5"
+    },
+    {
+      "value": 1,
+      "key": "total:myvi"
+    },
+    {
+      "value": 1,
+      "key": "total:land"
+    },
+    {
+      "value": 1,
+      "key": "total:alza"
+    }
+  ],
+  "analysis_type": "brands",
+  "output_path": "C:\\Users\\user\\Documents\\SITstuffs\\CloudC\\Cloud2\\data\\analysis/drivingsg_data_20250318_143009_brands_20250403_195039",
+  "categories": {
+    "total": [
+      {
+        "value": 46,
+        "key": "total:porsche"
+      },
+      {
+        "value": 61,
+        "key": "total:kia"
+      },
+      {
+        "value": 12,
+        "key": "total:lancer"
+      },
+      {
+        "value": 26,
+        "key": "total:hyundai"
+      },
+      {
+        "value": 69,
+        "key": "total:tesla"
+      },
+      {
+        "value": 49,
+        "key": "total:jazz"
+      },
+      {
+        "value": 99,
+        "key": "total:ford"
+      },
+      {
+        "value": 86,
+        "key": "total:bmw"
+      },
+      {
+        "value": 24,
+        "key": "total:civic"
+      },
+      {
+        "value": 81,
+        "key": "total:mazda"
+      },
+      {
+        "value": 135,
+        "key": "total:fit"
+      },
+      {
+        "value": 24,
+        "key": "total:golf"
+      },
+      {
+        "value": 24,
+        "key": "total:audi"
+      },
+      {
+        "value": 1,
+        "key": "total:maserati"
+      },
+      {
+        "value": 35,
+        "key": "total:altis"
+      },
+      {
+        "value": 6,
+        "key": "total:mitsubishi"
+      },
+      {
+        "value": 16,
+        "key": "total:lexus"
+      },
+      {
+        "value": 11,
+        "key": "total:volkswagen"
+      },
+      {
+        "value": 2,
+        "key": "total:saga"
+      },
+      {
+        "value": 3,
+        "key": "total:proton"
+      },
+      {
+        "value": 1,
+        "key": "total:cclass"
+      },
+      {
+        "value": 2,
+        "key": "total:mazda3"
+      },
+      {
+        "value": 29,
+        "key": "total:vios"
+      },
+      {
+        "value": 1,
+        "key": "total:cx5"
+      },
+      {
+        "value": 99,
+        "key": "total:mini"
+      },
+      {
+        "value": 30,
+        "key": "total:accord"
+      },
+      {
+        "value": 19,
+        "key": "total:attrage"
+      },
+      {
+        "value": 5,
+        "key": "total:ferrari"
+      },
+      {
+        "value": 98,
+        "key": "total:honda"
+      },
+      {
+        "value": 11,
+        "key": "total:freed"
+      },
+      {
+        "value": 1,
+        "key": "total:myvi"
+      },
+      {
+        "value": 18,
+        "key": "total:a3"
+      },
+      {
+        "value": 3,
+        "key": "total:a4"
+      },
+      {
+        "value": 7,
+        "key": "total:perodua"
+      },
+      {
+        "value": 2,
+        "key": "total:chevrolet"
+      },
+      {
+        "value": 30,
+        "key": "total:corolla"
+      },
+      {
+        "value": 15,
+        "key": "total:camry"
+      },
+      {
+        "value": 35,
+        "key": "total:mercedes"
+      },
+      {
+        "value": 6,
+        "key": "total:bentley"
+      },
+      {
+        "value": 22,
+        "key": "total:subaru"
+      },
+      {
+        "value": 90,
+        "key": "total:toyota"
+      },
+      {
+        "value": 23,
+        "key": "total:nissan"
+      },
+      {
+        "value": 2,
+        "key": "total:rolls"
+      },
+      {
+        "value": 33,
+        "key": "total:vezel"
+      },
+      {
+        "value": 1,
+        "key": "total:land"
+      },
+      {
+        "value": 10,
+        "key": "total:volvo"
+      },
+      {
+        "value": 1,
+        "key": "total:alza"
+      },
+      {
+        "value": 2,
+        "key": "total:jaguar"
+      }
+    ],
+    "brand_comment": [
+      {
+        "value": 15,
+        "key": "brand_comment:a3"
+      },
+      {
+        "value": 3,
+        "key": "brand_comment:a4"
+      },
+      {
+        "value": 26,
+        "key": "brand_comment:accord"
+      },
+      {
+        "value": 32,
+        "key": "brand_comment:altis"
+      },
+      {
+        "value": 18,
+        "key": "brand_comment:attrage"
+      },
+      {
+        "value": 23,
+        "key": "brand_comment:audi"
+      },
+      {
+        "value": 6,
+        "key": "brand_comment:bentley"
+      },
+      {
+        "value": 80,
+        "key": "brand_comment:bmw"
+      },
+      {
+        "value": 14,
+        "key": "brand_comment:camry"
+      },
+      {
+        "value": 1,
+        "key": "brand_comment:cclass"
+      },
+      {
+        "value": 2,
+        "key": "brand_comment:chevrolet"
+      },
+      {
+        "value": 22,
+        "key": "brand_comment:civic"
+      },
+      {
+        "value": 28,
+        "key": "brand_comment:corolla"
+      },
+      {
+        "value": 1,
+        "key": "brand_comment:cx5"
+      },
+      {
+        "value": 5,
+        "key": "brand_comment:ferrari"
+      },
+      {
+        "value": 119,
+        "key": "brand_comment:fit"
+      },
+      {
+        "value": 91,
+        "key": "brand_comment:ford"
+      },
+      {
+        "value": 10,
+        "key": "brand_comment:freed"
+      },
+      {
+        "value": 23,
+        "key": "brand_comment:golf"
+      },
+      {
+        "value": 83,
+        "key": "brand_comment:honda"
+      },
+      {
+        "value": 24,
+        "key": "brand_comment:hyundai"
+      },
+      {
+        "value": 2,
+        "key": "brand_comment:jaguar"
+      },
+      {
+        "value": 46,
+        "key": "brand_comment:jazz"
+      },
+      {
+        "value": 59,
+        "key": "brand_comment:kia"
+      },
+      {
+        "value": 11,
+        "key": "brand_comment:lancer"
+      },
+      {
+        "value": 1,
+        "key": "brand_comment:land"
+      },
+      {
+        "value": 16,
+        "key": "brand_comment:lexus"
+      },
+      {
+        "value": 1,
+        "key": "brand_comment:maserati"
+      },
+      {
+        "value": 73,
+        "key": "brand_comment:mazda"
+      },
+      {
+        "value": 1,
+        "key": "brand_comment:mazda3"
+      },
+      {
+        "value": 33,
+        "key": "brand_comment:mercedes"
+      },
+      {
+        "value": 90,
+        "key": "brand_comment:mini"
+      },
+      {
+        "value": 5,
+        "key": "brand_comment:mitsubishi"
+      },
+      {
+        "value": 1,
+        "key": "brand_comment:myvi"
+      },
+      {
+        "value": 23,
+        "key": "brand_comment:nissan"
+      },
+      {
+        "value": 5,
+        "key": "brand_comment:perodua"
+      },
+      {
+        "value": 45,
+        "key": "brand_comment:porsche"
+      },
+      {
+        "value": 3,
+        "key": "brand_comment:proton"
+      },
+      {
+        "value": 2,
+        "key": "brand_comment:rolls"
+      },
+      {
+        "value": 1,
+        "key": "brand_comment:saga"
+      },
+      {
+        "value": 19,
+        "key": "brand_comment:subaru"
+      },
+      {
+        "value": 65,
+        "key": "brand_comment:tesla"
+      },
+      {
+        "value": 83,
+        "key": "brand_comment:toyota"
+      },
+      {
+        "value": 27,
+        "key": "brand_comment:vezel"
+      },
+      {
+        "value": 28,
+        "key": "brand_comment:vios"
+      },
+      {
+        "value": 10,
+        "key": "brand_comment:volkswagen"
+      },
+      {
+        "value": 10,
+        "key": "brand_comment:volvo"
+      }
+    ],
+    "brand": [
+      {
+        "value": 135,
+        "key": "brand:fit"
+      },
+      {
+        "value": 99,
+        "key": "brand:ford"
+      },
+      {
+        "value": 99,
+        "key": "brand:mini"
+      },
+      {
+        "value": 98,
+        "key": "brand:honda"
+      },
+      {
+        "value": 90,
+        "key": "brand:toyota"
+      },
+      {
+        "value": 86,
+        "key": "brand:bmw"
+      },
+      {
+        "value": 81,
+        "key": "brand:mazda"
+      },
+      {
+        "value": 69,
+        "key": "brand:tesla"
+      },
+      {
+        "value": 61,
+        "key": "brand:kia"
+      },
+      {
+        "value": 49,
+        "key": "brand:jazz"
+      }
+    ]
+  },
+  "timestamp": "2025-04-03 19:50:41"
+}

@@ -247,89 +247,6 @@ class DatasetService:
             # Default to a general web search
             return self._search_general(query, limit)
     
-    def _search_kaggle(self, query, limit=5):
-        """Search for datasets on Kaggle"""
-        try:
-            # This is a simplified version - in production, you would use Kaggle API
-            # For now, we'll simulate results
-            
-            # Simulate network delay
-            time.sleep(1)
-            
-            # Sample datasets related to social media
-            sample_datasets = [
-                {
-                    "id": "kaggle_twitter_1",
-                    "title": "Twitter Sentiment Analysis Dataset",
-                    "description": "A dataset of 1.6 million tweets with sentiment labels",
-                    "size": "250MB",
-                    "records": 1600000,
-                    "url": "https://www.kaggle.com/datasets/kazanova/sentiment140",
-                    "format": "CSV"
-                },
-                {
-                    "id": "kaggle_reddit_1",
-                    "title": "Reddit Comments Dataset",
-                    "description": "A collection of Reddit comments from various subreddits",
-                    "size": "500MB",
-                    "records": 3000000,
-                    "url": "https://www.kaggle.com/datasets/reddit/reddit-comments-may-2015",
-                    "format": "JSON"
-                },
-                {
-                    "id": "kaggle_yelp_1",
-                    "title": "Yelp Reviews Dataset",
-                    "description": "Business reviews from the Yelp dataset challenge",
-                    "size": "2.8GB",
-                    "records": 5200000,
-                    "url": "https://www.kaggle.com/datasets/yelp-dataset/yelp-dataset",
-                    "format": "JSON"
-                },
-                {
-                    "id": "kaggle_amazon_1",
-                    "title": "Amazon Product Reviews",
-                    "description": "Product reviews from Amazon across multiple categories",
-                    "size": "3.5GB",
-                    "records": 7800000,
-                    "url": "https://www.kaggle.com/datasets/cynthiarempel/amazon-us-customer-reviews-dataset",
-                    "format": "CSV"
-                },
-                {
-                    "id": "kaggle_social_1",
-                    "title": "Social Media Trends 2023",
-                    "description": "Trending topics and hashtags across social platforms",
-                    "size": "150MB",
-                    "records": 500000,
-                    "url": "https://www.kaggle.com/datasets/example/social-trends-2023",
-                    "format": "CSV"
-                },
-                {
-                    "id": "kaggle_instagram_1",
-                    "title": "Instagram Influencer Dataset",
-                    "description": "Data on top Instagram influencers and their engagement metrics",
-                    "size": "80MB",
-                    "records": 100000,
-                    "url": "https://www.kaggle.com/datasets/example/instagram-influencers",
-                    "format": "CSV"
-                }
-            ]
-            
-            # Filter based on query
-            if query:
-                filtered_datasets = [
-                    ds for ds in sample_datasets 
-                    if query.lower() in ds["title"].lower() or query.lower() in ds["description"].lower()
-                ]
-            else:
-                filtered_datasets = sample_datasets
-            
-            # Return limited results
-            return filtered_datasets[:limit]
-            
-        except Exception as e:
-            logger.error(f"Error searching Kaggle: {str(e)}")
-            return []
-    
     def _search_reddit(self, query, limit=5):
         """Search for datasets from Reddit"""
         # Similar implementation as Kaggle but for Reddit
@@ -1000,4 +917,134 @@ class AnalysisService:
                     "yAxisID": 'y1'
                 }
             ]
+        }
+
+# Add standalone function for running Hadoop jobs
+def run_hadoop_job(input_file, analysis_type, output_dir, timerange_start='', timerange_end=''):
+    """
+    Execute a Hadoop job for data analysis
+    
+    Args:
+        input_file (str): Path to the input file for analysis
+        analysis_type (str): Type of analysis to perform (sentiment, traffic, location, brands, trend)
+        output_dir (str): Directory to store output files
+        timerange_start (str): Optional start timestamp for filtering data
+        timerange_end (str): Optional end timestamp for filtering data
+        
+    Returns:
+        dict: Result of the Hadoop job execution
+    """
+    try:
+        import subprocess
+        import os
+        import uuid
+        from datetime import datetime
+        
+        # Log the request
+        logger.info(f"Running Hadoop job: {analysis_type} on {input_file}")
+        logger.info(f"Output directory: {output_dir}")
+        if timerange_start or timerange_end:
+            logger.info(f"Time range: {timerange_start} to {timerange_end}")
+        
+        # Generate a unique job ID
+        job_id = str(uuid.uuid4())
+        
+        # Create timestamp string for output directory naming
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        dataset_name = os.path.basename(input_file).split('.')[0]
+        
+        # Format the output directory with dataset and timestamp
+        formatted_output_dir = os.path.join(
+            output_dir,
+            f"{dataset_name}_{analysis_type}_{timestamp}"
+        )
+        
+        # Ensure the output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Determine the JAR file to use based on analysis type
+        jar_mapping = {
+            'sentiment': 'TAsentiment.jar',
+            'traffic': 'TAtraffic.jar',
+            'location': 'TAlocation.jar',
+            'brands': 'TAbrands.jar',
+            'trend': 'TAtrend.jar'
+        }
+        
+        jar_file = jar_mapping.get(analysis_type)
+        if not jar_file:
+            return {
+                'status': 'error',
+                'message': f'Invalid analysis type: {analysis_type}'
+            }
+        
+        # Get the project root directory
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        
+        # Construct the hadoop jar command
+        hadoop_jar_path = os.path.join(project_root, 'HadoopJar', jar_file)
+        
+        # Build the command
+        cmd = ['hadoop', 'jar', hadoop_jar_path, input_file, formatted_output_dir]
+        
+        # Add timestamp parameters if provided
+        if timerange_start:
+            cmd.extend(['--start-time', timerange_start])
+        if timerange_end:
+            cmd.extend(['--end-time', timerange_end])
+        
+        # Log the command
+        logger.info(f"Executing command: {' '.join(cmd)}")
+        
+        # Check if the JAR file exists
+        if not os.path.exists(hadoop_jar_path):
+            return {
+                'status': 'error',
+                'message': f'Hadoop JAR file not found: {hadoop_jar_path}'
+            }
+        
+        # Execute the command
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        
+        # Check the result
+        if process.returncode == 0:
+            # Update the analysis index to include this new analysis
+            visualization_dir = os.path.join(formatted_output_dir, 'visualization')
+            os.makedirs(visualization_dir, exist_ok=True)
+            
+            # Create a summary file for the visualization
+            summary_file = os.path.join(visualization_dir, 'summary.json')
+            
+            # Write to the summary file
+            with open(summary_file, 'w') as f:
+                json.dump({
+                    'analysis_type': analysis_type,
+                    'dataset': dataset_name,
+                    'timestamp': timestamp,
+                    'input_file': input_file,
+                    'output_dir': formatted_output_dir
+                }, f)
+            
+            return {
+                'status': 'success',
+                'message': 'Hadoop job completed successfully',
+                'job_id': job_id,
+                'output_dir': formatted_output_dir,
+                'summary_file': summary_file
+            }
+        else:
+            error_message = stderr.decode('utf-8')
+            logger.error(f"Hadoop job failed: {error_message}")
+            return {
+                'status': 'error',
+                'message': f'Hadoop job failed: {error_message}'
+            }
+    except Exception as e:
+        import traceback
+        logger.error(f"Error running Hadoop job: {str(e)}")
+        logger.error(traceback.format_exc())
+        return {
+            'status': 'error',
+            'message': f'Error running Hadoop job: {str(e)}'
         } 

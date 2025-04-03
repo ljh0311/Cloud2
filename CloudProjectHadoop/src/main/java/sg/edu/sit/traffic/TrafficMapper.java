@@ -12,6 +12,10 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.HashSet;
 import java.util.Set;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class TrafficMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
     private final static IntWritable one = new IntWritable(1);
@@ -22,11 +26,48 @@ public class TrafficMapper extends Mapper<LongWritable, Text, Text, IntWritable>
     private Set<String> drivingSchools;
     private Set<String> carBrands;
     private Set<String> timeframeKeywords;
+    
+    // Timestamp filter variables
+    private LocalDateTime startTimestamp;
+    private LocalDateTime endTimestamp;
+    private boolean filterByTimestamp = false;
+    private DateTimeFormatter[] dateTimeFormatters;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
         analysisType = conf.get("analysis.type", "trend");
+        
+        // Initialize timestamp filters
+        String startTimeStr = conf.get("analysis.timestamp.start");
+        String endTimeStr = conf.get("analysis.timestamp.end");
+        
+        if (startTimeStr != null || endTimeStr != null) {
+            filterByTimestamp = true;
+            
+            // Initialize array of supported date formats to try
+            dateTimeFormatters = new DateTimeFormatter[] {
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"),
+                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"),
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+                DateTimeFormatter.ISO_OFFSET_DATE_TIME,
+                DateTimeFormatter.ISO_ZONED_DATE_TIME
+            };
+            
+            // Parse start time if provided
+            if (startTimeStr != null) {
+                startTimestamp = parseDateTime(startTimeStr);
+                System.out.println("Filtering records after: " + startTimestamp);
+            }
+            
+            // Parse end time if provided
+            if (endTimeStr != null) {
+                endTimestamp = parseDateTime(endTimeStr);
+                System.out.println("Filtering records before: " + endTimestamp);
+            }
+        }
 
         // Initialize traffic keywords
         trafficKeywords = new HashSet<>();
@@ -242,18 +283,139 @@ public class TrafficMapper extends Mapper<LongWritable, Text, Text, IntWritable>
         timeframeKeywords.add("deepavali");
     }
 
+    /**
+     * Parse a date-time string using multiple possible formats
+     * @param dateStr Date string to parse
+     * @return Parsed LocalDateTime or null if parsing fails
+     */
+    private LocalDateTime parseDateTime(String dateStr) {
+        for (DateTimeFormatter formatter : dateTimeFormatters) {
+            try {
+                // Try parsing as LocalDateTime
+                return LocalDateTime.parse(dateStr, formatter);
+            } catch (DateTimeParseException e1) {
+                try {
+                    // Try parsing as ZonedDateTime and convert to LocalDateTime
+                    return ZonedDateTime.parse(dateStr, formatter).toLocalDateTime();
+                } catch (DateTimeParseException e2) {
+                    // Continue to next formatter
+                }
+            }
+        }
+        
+        // If all parsing attempts fail, try a more lenient approach
+        try {
+            // For "yyyy-MM-dd" format without time
+            if (dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                return LocalDateTime.parse(dateStr + " 00:00", dateTimeFormatters[0]);
+            }
+            // For "yyyy/MM/dd" format without time
+            else if (dateStr.matches("\\d{4}/\\d{2}/\\d{2}")) {
+                return LocalDateTime.parse(dateStr.replace('/', '-') + " 00:00", dateTimeFormatters[0]);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to parse date: " + dateStr);
+        }
+        
+        System.err.println("Warning: Could not parse date string: " + dateStr);
+        return null;
+    }
+    
+    /**
+     * Extract timestamp from a JSON object
+     * @param json JSON object containing timestamp
+     * @return LocalDateTime or null if extraction fails
+     */
+    private LocalDateTime extractTimestamp(JSONObject json) {
+        try {
+            // Try various timestamp fields that might be present in the data
+            String[] timestampFields = {
+                "created_utc", "created_at", "timestamp", "date", "time", "created", "published_at"
+            };
+            
+            for (String field : timestampFields) {
+                if (json.has(field) && !json.isNull(field)) {
+                    String timestampStr = json.getString(field);
+                    return parseDateTime(timestampStr);
+                }
+            }
+            
+            // If no explicit timestamp field, check nested data
+            if (json.has("data") && !json.isNull("data")) {
+                Object dataObj = json.get("data");
+                if (dataObj instanceof JSONObject) {
+                    JSONObject dataJson = (JSONObject) dataObj;
+                    for (String field : timestampFields) {
+                        if (dataJson.has(field) && !dataJson.isNull(field)) {
+                            String timestampStr = dataJson.getString(field);
+                            return parseDateTime(timestampStr);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Just log and continue - we'll return null and use fallback logic
+            System.err.println("Failed to extract timestamp: " + e.getMessage());
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Check if a JSON record falls within the configured time range
+     * @param json JSON object to check
+     * @return true if within range or no filtering, false otherwise
+     */
+    private boolean isWithinTimeRange(JSONObject json) {
+        // If no timestamp filtering is enabled, always include the record
+        if (!filterByTimestamp) {
+            return true;
+        }
+        
+        // Extract timestamp from the record
+        LocalDateTime recordTimestamp = extractTimestamp(json);
+        
+        // If we couldn't extract a timestamp, include the record
+        if (recordTimestamp == null) {
+            return true;
+        }
+        
+        // Check against start timestamp if specified
+        if (startTimestamp != null && recordTimestamp.isBefore(startTimestamp)) {
+            return false;
+        }
+        
+        // Check against end timestamp if specified
+        if (endTimestamp != null && recordTimestamp.isAfter(endTimestamp)) {
+            return false;
+        }
+        
+        // Record is within range
+        return true;
+    }
+
     @Override
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        String line = value.toString().trim();
         try {
+            String line = value.toString().trim();
+            if (line.isEmpty() || !line.startsWith("{")) {
+                return; // Skip invalid lines
+            }
+            
             JSONObject json = new JSONObject(line);
-
-            switch (analysisType.toLowerCase()) {
-                case "trend":
-                    processTrend(json, context);
-                    break;
+            
+            // Apply timestamp filtering
+            if (!isWithinTimeRange(json)) {
+                return; // Skip records outside time range
+            }
+            
+            // Process based on analysis type
+            switch (analysisType) {
                 case "sentiment":
                     processSentiment(json, context);
+                    break;
+                case "trend":
+                    processTrend(json, context);
                     break;
                 case "traffic":
                     processTraffic(json, context);
@@ -261,11 +423,11 @@ public class TrafficMapper extends Mapper<LongWritable, Text, Text, IntWritable>
                 case "location":
                     processLocation(json, context);
                     break;
-                case "engagement":
-                    processEngagement(json, context);
-                    break;
                 case "topic":
                     processTopic(json, context);
+                    break;
+                case "engagement":
+                    processEngagement(json, context);
                     break;
                 case "brands":
                     processBrands(json, context);
@@ -274,21 +436,25 @@ public class TrafficMapper extends Mapper<LongWritable, Text, Text, IntWritable>
                     processTimeframe(json, context);
                     break;
                 default:
+                    // Default to trend analysis
                     processTrend(json, context);
             }
-
-            // Process comments if they exist
-            if (json.has("comments")) {
+            
+            // Process comments if present
+            if (json.has("comments") && !json.isNull("comments")) {
                 JSONArray comments = json.getJSONArray("comments");
                 for (int i = 0; i < comments.length(); i++) {
                     JSONObject comment = comments.getJSONObject(i);
-                    processComment(comment, context);
+                    
+                    // Apply timestamp filtering to comments as well
+                    if (isWithinTimeRange(comment)) {
+                        processComment(comment, context);
+                    }
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error processing line: " + e.getMessage());
-            // Track errors with counter
-            context.getCounter("TrafficMapper", "ErrorCount").increment(1);
+            // Log error but continue processing other records
+            System.err.println("Error processing record: " + e.getMessage());
         }
     }
 

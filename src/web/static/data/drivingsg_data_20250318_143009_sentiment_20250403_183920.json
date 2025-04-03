@@ -1,0 +1,87 @@
+{
+  "data": [
+    {
+      "value": 7081,
+      "key": "sentiment:neutral"
+    },
+    {
+      "value": 5199,
+      "key": "traffic_sentiment_intensity:low"
+    },
+    {
+      "value": 2949,
+      "key": "traffic_sentiment:neutral"
+    },
+    {
+      "value": 1690,
+      "key": "sentiment:positive"
+    },
+    {
+      "value": 1444,
+      "key": "sentiment:negative"
+    },
+    {
+      "value": 1254,
+      "key": "traffic_sentiment:positive"
+    },
+    {
+      "value": 1169,
+      "key": "traffic_sentiment:negative"
+    },
+    {
+      "value": 136,
+      "key": "traffic_sentiment_intensity:medium"
+    },
+    {
+      "value": 37,
+      "key": "traffic_sentiment_intensity:high"
+    }
+  ],
+  "analysis_type": "sentiment",
+  "output_path": "drivingsg_data_20250318_143009_sentiment_20250403_183920",
+  "categories": {
+    "sentiment": [
+      {
+        "value": 1444,
+        "key": "sentiment:negative"
+      },
+      {
+        "value": 7081,
+        "key": "sentiment:neutral"
+      },
+      {
+        "value": 1690,
+        "key": "sentiment:positive"
+      }
+    ],
+    "traffic_sentiment_intensity": [
+      {
+        "value": 136,
+        "key": "traffic_sentiment_intensity:medium"
+      },
+      {
+        "value": 37,
+        "key": "traffic_sentiment_intensity:high"
+      },
+      {
+        "value": 5199,
+        "key": "traffic_sentiment_intensity:low"
+      }
+    ],
+    "traffic_sentiment": [
+      {
+        "value": 1169,
+        "key": "traffic_sentiment:negative"
+      },
+      {
+        "value": 2949,
+        "key": "traffic_sentiment:neutral"
+      },
+      {
+        "value": 1254,
+        "key": "traffic_sentiment:positive"
+      }
+    ]
+  },
+  "timestamp": "2025-04-03 18:39:22"
+}

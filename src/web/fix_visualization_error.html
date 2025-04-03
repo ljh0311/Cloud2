@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Visualization Errors</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2980b9;
+        }
+        .method {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        code {
+            background-color: #f1f1f1;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: Consolas, monospace;
+        }
+        pre {
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .error {
+            background-color: #ffebee;
+            border-left: 4px solid #e53935;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .success {
+            background-color: #e8f5e9;
+            border-left: 4px solid #43a047;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fix Visualization Errors</h1>
+    
+    <div class="error">
+        <h3>Error Message</h3>
+        <p><strong>Failed to load datasets index. Please run the update_index.bat script in the data/analysis folder and make sure the analyses_index.json file exists.</strong></p>
+    </div>
+    
+    <h2>This error occurs because:</h2>
+    <p>The visualization system is trying to find a file called <code>analyses_index.json</code> in a specific location, but it doesn't exist or can't be accessed.</p>
+    
+    <h2>Solution 1: Run the Fix Script</h2>
+    <div class="method">
+        <p>The easiest way to fix this is to run our <code>fix_visualizations.bat</code> script:</p>
+        <ol>
+            <li>Open a command prompt (CMD)</li>
+            <li>Navigate to this directory (<code>src/web</code>)</li>
+            <li>Run the fix script:
+                <pre>fix_visualizations.bat</pre>
+            </li>
+        </ol>
+        <p>This script will:
+            <ul>
+                <li>Scan your analysis folders</li>
+                <li>Generate the required index file in the correct location</li>
+                <li>Set up everything needed for the visualizations to work</li>
+            </ul>
+        </p>
+        <button onclick="runFixScript()">Run Fix Script</button>
+    </div>
+    
+    <h2>Solution 2: Manual Steps</h2>
+    <div class="method">
+        <p>If the script doesn't work for any reason, you can perform these steps manually:</p>
+        <ol>
+            <li>Create these folders (if they don't exist):
+                <pre>data\web\visualizations\data</pre>
+            </li>
+            <li>Copy the <code>update_index.bat</code> script from <code>data\analysis</code> to <code>data\web</code></li>
+            <li>Run the script from the <code>data\web</code> directory</li>
+        </ol>
+    </div>
+    
+    <h2>Solution 3: Use the Simple Visualization</h2>
+    <div class="method">
+        <p>We've created a simplified visualization that's more tolerant of different file structures:</p>
+        <p>Try accessing:
+            <pre>http://localhost:8000/src/web/templates/simple_visualizations.html</pre>
+            instead of 
+            <pre>http://localhost:5000/visualizations.html</pre>
+        </p>
+        <p>The simple visualization will try multiple paths to find your data files.</p>
+        <a href="./templates/simple_visualizations.html"><button>Open Simple Visualization</button></a>
+    </div>
+    
+    <div class="success">
+        <h3>Still having problems?</h3>
+        <p>If you still encounter issues, try running the test tool to diagnose file path problems:</p>
+        <a href="../data/web/test_paths.html"><button>Run Test Tool</button></a>
+    </div>
+    
+    <script>
+        function runFixScript() {
+            alert("This would run the fix_visualizations.bat script, but we're in a browser environment. Please run it manually from the command line.");
+        }
+    </script>
+</body>
+</html> 

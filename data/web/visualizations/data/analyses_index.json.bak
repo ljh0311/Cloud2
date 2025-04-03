@@ -1,0 +1,51 @@
+{
+    "timestamp":  "2025-04-03 19:16:26",
+    "analyses":  [
+                     {
+                         "id":  "drivingsg_data_20250318_143009_brands_20250403_183934",
+                         "run_date":  "20250403_183934",
+                         "data_date":  "20250318_143009",
+                         "analysis_type":  "brands",
+                         "dataset":  "drivingsg_data",
+                         "summary_file":  "drivingsg_data_20250318_143009_brands_20250403_183934/visualization/summary.json",
+                         "display_name":  "brands analysis of drivingsg_data (20250403_183934)"
+                     },
+                     {
+                         "id":  "drivingsg_data_20250318_143009_location_20250403_183841",
+                         "run_date":  "20250403_183841",
+                         "data_date":  "20250318_143009",
+                         "analysis_type":  "location",
+                         "dataset":  "drivingsg_data",
+                         "summary_file":  "drivingsg_data_20250318_143009_location_20250403_183841/visualization/summary.json",
+                         "display_name":  "location analysis of drivingsg_data (20250403_183841)"
+                     },
+                     {
+                         "id":  "drivingsg_data_20250318_143009_sentiment_20250403_183920",
+                         "run_date":  "20250403_183920",
+                         "data_date":  "20250318_143009",
+                         "analysis_type":  "sentiment",
+                         "dataset":  "drivingsg_data",
+                         "summary_file":  "drivingsg_data_20250318_143009_sentiment_20250403_183920/visualization/summary.json",
+                         "display_name":  "sentiment analysis of drivingsg_data (20250403_183920)"
+                     },
+                     {
+                         "id":  "drivingsg_data_20250318_143009_traffic_20250403_183910",
+                         "run_date":  "20250403_183910",
+                         "data_date":  "20250318_143009",
+                         "analysis_type":  "traffic",
+                         "dataset":  "drivingsg_data",
+                         "summary_file":  "drivingsg_data_20250318_143009_traffic_20250403_183910/visualization/summary.json",
+                         "display_name":  "traffic analysis of drivingsg_data (20250403_183910)"
+                     },
+                     {
+                         "id":  "drivingsg_data_20250318_143009_trend_20250403_183549",
+                         "run_date":  "20250403_183549",
+                         "data_date":  "20250318_143009",
+                         "analysis_type":  "trend",
+                         "dataset":  "drivingsg_data",
+                         "summary_file":  "drivingsg_data_20250318_143009_trend_20250403_183549/visualization/summary.json",
+                         "display_name":  "trend analysis of drivingsg_data (20250403_183549)"
+                     }
+                 ],
+    "count":  5
+}

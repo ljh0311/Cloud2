@@ -1,0 +1,93 @@
+{
+  "data": [
+    {
+      "value": 3051,
+      "key": "keyword:car"
+    },
+    {
+      "value": 1233,
+      "key": "keyword:driving"
+    },
+    {
+      "value": 916,
+      "key": "keyword:road"
+    },
+    {
+      "value": 916,
+      "key": "school:road"
+    },
+    {
+      "value": 622,
+      "key": "keyword:test"
+    },
+    {
+      "value": 622,
+      "key": "school:test"
+    },
+    {
+      "value": 603,
+      "key": "keyword:traffic"
+    },
+    {
+      "value": 592,
+      "key": "keyword:driver"
+    },
+    {
+      "value": 574,
+      "key": "keyword:bike"
+    },
+    {
+      "value": 532,
+      "key": "school:private"
+    }
+  ],
+  "analysis_type": "trend",
+  "output_path": "C:\\Users\\user\\Documents\\SITstuffs\\CloudC\\Cloud2\\data\\analysis/drivingsg_data_20250318_143009_trend_20250403_195055",
+  "categories": {
+    "school": [
+      {
+        "value": 916,
+        "key": "school:road"
+      },
+      {
+        "value": 622,
+        "key": "school:test"
+      },
+      {
+        "value": 532,
+        "key": "school:private"
+      }
+    ],
+    "keyword": [
+      {
+        "value": 3051,
+        "key": "keyword:car"
+      },
+      {
+        "value": 1233,
+        "key": "keyword:driving"
+      },
+      {
+        "value": 916,
+        "key": "keyword:road"
+      },
+      {
+        "value": 622,
+        "key": "keyword:test"
+      },
+      {
+        "value": 603,
+        "key": "keyword:traffic"
+      },
+      {
+        "value": 592,
+        "key": "keyword:driver"
+      },
+      {
+        "value": 574,
+        "key": "keyword:bike"
+      }
+    ]
+  },
+  "timestamp": "2025-04-03 19:50:57"
+}

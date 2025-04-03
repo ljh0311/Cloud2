@@ -87,14 +87,16 @@
                     </div>
                 </div>
                 
-                <!-- Dataset List Container -->
+                <!-- Dataset Selection -->
                 <div id="dataset-section" class="mb-4">
-                    <div id="dataset-list-container" class="dataset-list mb-4">
-                        <div class="loading-placeholder text-center py-4">
-                            <i class="fas fa-spinner fa-spin"></i> Loading available datasets...
+                    <div class="mb-3">
+                        <label for="dataset-file" class="form-label">Select Dataset File</label>
+                        <input type="file" class="form-control" id="dataset-file" name="dataset_file" accept=".json,.csv" required>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> Accepted file types: JSON (.json), CSV (.csv)
                         </div>
                     </div>
-                    <input type="hidden" id="selected-dataset" name="dataset_id" required>
+                    <input type="hidden" id="selected-dataset" name="dataset_id">
                 </div>
 
                 <!-- Reddit Scraper Card -->
@@ -143,6 +145,69 @@
                             
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle"></i> Data will be scraped from r/drivingSG when you run the analysis
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hadoop Job Execution Section -->
+                <div id="hadoop-job-section" class="mb-4">
+                    <h4><i class="fas fa-cogs"></i> Hadoop Job Execution</h4>
+                    <p class="text-muted">Run custom Hadoop jobs on your data</p>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="hadoop-input-file" class="form-label">Input File</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="hadoop-input-file" name="hadoop_input_file" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" id="browse-input-btn">
+                                            <i class="fas fa-folder-open"></i> Browse
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Select a JSON file to analyze</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="hadoop-analysis-type" class="form-label">Analysis Type</label>
+                                    <select class="form-select" id="hadoop-analysis-type" name="hadoop_analysis_type">
+                                        <option value="">Select analysis type...</option>
+                                        <option value="brands">Brand Analysis</option>
+                                        <option value="location">Location Analysis</option>
+                                        <option value="sentiment">Sentiment Analysis</option>
+                                        <option value="traffic">Traffic Analysis</option>
+                                        <option value="trend">Trend Analysis</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="hadoop-output-dir" class="form-label">Output Directory</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="hadoop-output-dir" name="hadoop_output_dir" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" id="browse-output-btn">
+                                            <i class="fas fa-folder-open"></i> Browse
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="hadoop-timerange-start" class="form-label">Start Timestamp (Optional)</label>
+                                    <input type="datetime-local" class="form-control" id="hadoop-timerange-start" name="hadoop_timerange_start">
+                                    <small class="text-muted">Filter data starting from this timestamp</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="hadoop-timerange-end" class="form-label">End Timestamp (Optional)</label>
+                                    <input type="datetime-local" class="form-control" id="hadoop-timerange-end" name="hadoop_timerange_end">
+                                    <small class="text-muted">Filter data up to this timestamp</small>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> This will run a Hadoop job using the JAR files from the HadoopJar directory
                             </div>
                         </div>
                     </div>
