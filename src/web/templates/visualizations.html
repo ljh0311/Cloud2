@@ -46,24 +46,10 @@
     <div class="card mb-4">
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-12">
                     <label for="dataset-select" class="form-label">Analysis Dataset</label>
                     <select id="dataset-select" class="form-select">
                         <option value="">Select dataset...</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label for="date-range" class="form-label">Time Range</label>
-                    <input type="text" id="date-range" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label for="analysis-type" class="form-label">Analysis Type</label>
-                    <select id="analysis-type" class="form-select">
-                        <option value="all">All Analysis</option>
-                        <option value="location">Location Analysis</option>
-                        <option value="traffic">Traffic Incidents</option>
-                        <option value="sentiment">Sentiment Analysis</option>
-                        <option value="trends">Trend Analysis</option>
                     </select>
                 </div>
             </div>
@@ -96,15 +82,6 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h3 id="sentiment-score">-</h3>
                     <span id="sentiment-trend" class="trend"></span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="metric-card">
-                <h6><i class="fas fa-chart-line"></i> Top Trend</h6>
-                <div class="d-flex justify-content-between align-items-center">
-                    <h3 id="top-trend">-</h3>
-                    <span id="trend-change" class="trend"></span>
                 </div>
             </div>
         </div>
@@ -174,49 +151,13 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0"><i class="far fa-clock"></i> Traffic Patterns & Journey Planning</h5>
+                    <h5 class="mb-0"><i class="far fa-clock"></i> Traffic Patterns</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-12">
                             <h5>Daily Traffic Pattern</h5>
                             <canvas id="time-pattern-chart" height="250"></canvas>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Journey Planning</h5>
-                            <div class="mb-3">
-                                <label for="journey-start" class="form-label">Starting Location</label>
-                                <select class="form-select" id="journey-start">
-                                    <option value="">Select starting point...</option>
-                                    <!-- Filled dynamically -->
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="journey-end" class="form-label">Destination</label>
-                                <select class="form-select" id="journey-end">
-                                    <option value="">Select destination...</option>
-                                    <!-- Filled dynamically -->
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="journey-time" class="form-label">Departure Time</label>
-                                <select class="form-select" id="journey-time">
-                                    <option value="morning_rush">Morning Rush Hour (7-9 AM)</option>
-                                    <option value="midday">Midday (10 AM - 4 PM)</option>
-                                    <option value="evening_rush">Evening Rush Hour (5-7 PM)</option>
-                                    <option value="night">Night (8 PM - 6 AM)</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-primary" id="calculate-journey">Calculate Best Route</button>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="card bg-light">
-                                <div class="card-body" id="journey-results">
-                                    <p class="text-center text-muted"><i class="fas fa-info-circle"></i> Select locations to calculate the best route and estimated travel time</p>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -252,20 +193,8 @@
     </div>
 
     <div class="row">
-        <!-- Traffic Trends -->
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Traffic Trends</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="trends-chart"></canvas>
-                </div>
-            </div>
-        </div>
-
         <!-- Brand Analysis -->
-        <div class="col-md-6">
+        <div class="col-md-12">
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="fas fa-car"></i> Vehicle Brand Analysis</h5>
@@ -287,89 +216,6 @@
                 <div class="card-body">
                     <canvas id="models-chart"></canvas>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Vehicle Safety Analysis Section -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-car-crash"></i> Vehicle Safety Analysis</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5>Vehicle Brands in Incident Reports</h5>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-hover" id="vehicle-incident-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Brand</th>
-                                            <th>Mentions</th>
-                                            <th>Incident Association</th>
-                                            <th>Sentiment</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Filled dynamically -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Vehicle Models in Incident Reports</h5>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-hover" id="model-incident-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Model</th>
-                                            <th>Brand</th>
-                                            <th>Mentions</th>
-                                            <th>Incident Type</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Filled dynamically -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle"></i> <strong>Note:</strong> Vehicle mentions in traffic reports may indicate involvement in incidents or merely presence at the scene. This data should be interpreted as frequency of appearance in reports rather than direct causation.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Detailed Analysis -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0"><i class="fas fa-table"></i> Detailed Analysis</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover" id="analysis-table">
-                    <thead>
-                        <tr>
-                            <th>Location</th>
-                            <th>Incidents</th>
-                            <th>Severity</th>
-                            <th>Sentiment</th>
-                            <th>Trend</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Filled dynamically -->
-                    </tbody>
-                </table>
             </div>
         </div>
     </div>
@@ -430,16 +276,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <h5>Recent Reddit Comments</h5>
-                            <div class="overflow-auto" style="max-height: 200px;">
-                                <ul class="list-group" id="reddit-comments">
-                                    <li class="list-group-item">Loading recent comments...</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -484,27 +320,6 @@ const sentimentChart = new Chart(document.getElementById('sentiment-chart'), {
         plugins: {
             legend: {
                 position: 'bottom'
-            }
-        }
-    }
-});
-
-const trendsChart = new Chart(document.getElementById('trends-chart'), {
-    type: 'line',
-    data: {
-        labels: [],
-        datasets: []
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true
             }
         }
     }
@@ -635,17 +450,8 @@ async function loadData(analysisId) {
         // Load all analyses for this dataset
         const analyses = await loadAllAnalysesForDataset(selectedDataset, selectedRunDate);
         
-        // Get the selected analysis type
-        const analysisTypeSelector = document.getElementById('analysis-type');
-        const selectedAnalysisType = analysisTypeSelector.value;
-        
-        // Filter data based on selected analysis type if not 'all'
-        if (selectedAnalysisType !== 'all') {
-            if (!analyses[selectedAnalysisType]) {
-                console.warn(`Selected analysis type ${selectedAnalysisType} not available for this dataset`);
-                alert(`Selected analysis type ${selectedAnalysisType} is not available for this dataset. Showing all available analyses.`);
-            }
-        }
+        // Always use 'all' as the analysis type since we removed the selector
+        const selectedAnalysisType = 'all';
         
         updateDashboard(analyses, selectedAnalysisType);
     } catch (error) {
@@ -705,7 +511,7 @@ async function loadAllAnalysesForDataset(dataset, runDate) {
             const response = await fetch(analysis.summary_file);
             
             if (response.ok) {
-                const data = await response.json();
+    const data = await response.json();
                 
                 // Process raw data if it's in the MapReduce output format
                 if (data.summary_file && data.output_dir && !data.data) {
@@ -745,9 +551,6 @@ async function loadAllAnalysesForDataset(dataset, runDate) {
     // Get the analysis types that were actually loaded
     const loadedAnalysisTypes = Object.keys(analyses);
     console.log('Loaded analysis types:', loadedAnalysisTypes);
-    
-    // Update the analysis type selector to show only available types
-    updateAnalysisTypeSelector(loadedAnalysisTypes);
     
     return {
         dataset_id: `${dataset}_${runDate}`,
@@ -992,13 +795,13 @@ function updateDashboard(data, selectedAnalysisType) {
         }
         document.getElementById('total-locations').textContent = totalIncidents || 0;
     
-        // Update map
-        map.eachLayer((layer) => {
-            if (layer instanceof L.Marker) {
-                map.removeLayer(layer);
-            }
-        });
-        
+    // Update map
+    map.eachLayer((layer) => {
+        if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+        }
+    });
+    
         // Handle different location data structures
         let locationData = [];
         if (data.location.locations) {
@@ -1033,13 +836,13 @@ function updateDashboard(data, selectedAnalysisType) {
                 });
                 
                 const marker = L.marker([coords.lat, coords.lng], { icon: customIcon })
-                .bindPopup(`
-                    <strong>${loc.name}</strong><br>
-                    Incidents: ${loc.count}<br>
+            .bindPopup(`
+                <strong>${loc.name}</strong><br>
+                Incidents: ${loc.count}<br>
                     Risk Level: <span class="text-${riskLevel === 'high' ? 'danger' : riskLevel === 'medium' ? 'warning' : 'success'}">${riskLevel.toUpperCase()}</span><br>
                     ${coords.description || ''}
-                `)
-                .addTo(map);
+            `)
+            .addTo(map);
             }
         });
         
@@ -1089,12 +892,12 @@ function updateDashboard(data, selectedAnalysisType) {
             });
         }
         
-        sentimentChart.data.datasets[0].data = [
+    sentimentChart.data.datasets[0].data = [
             sentimentData.find(s => s.sentiment === 'positive')?.count || 0,
             sentimentData.find(s => s.sentiment === 'neutral')?.count || 0,
             sentimentData.find(s => s.sentiment === 'negative')?.count || 0
-        ];
-        sentimentChart.update();
+    ];
+    sentimentChart.update();
         
         // Update sentiment score in summary
         const positivePercentage = sentimentData.find(s => s.sentiment === 'positive')?.percentage || 0;
@@ -1110,47 +913,6 @@ function updateDashboard(data, selectedAnalysisType) {
         
         // Reset Reddit sentiment section
         resetRedditSentimentSection();
-    }
-
-    // Update trends chart
-    if (data.trend && (!shouldFilterByType || selectedAnalysisType === 'trend')) {
-        let trendData = [];
-        if (data.trend.trends) {
-            trendData = data.trend.trends;
-        } else if (data.trend.data) {
-            // Convert from summary.json format
-            trendData = data.trend.data.map(item => {
-                const keyParts = item.key.split(':');
-                const category = keyParts[0];
-                const keyword = keyParts.length > 1 ? keyParts[1] : item.key;
-                return {
-                    category: category,
-                    keyword: keyword,
-                    count: item.value
-                };
-            });
-        }
-        
-        const trends = trendData.slice(0, 10);
-        trendsChart.data.labels = trends.map(t => t.keyword);
-        trendsChart.data.datasets = [{
-            label: 'Mentions',
-            data: trends.map(t => t.count),
-            borderColor: '#007bff',
-            tension: 0.1
-        }];
-        trendsChart.update();
-        
-        // Update top trend
-        if (trends.length > 0) {
-            document.getElementById('top-trend').textContent = trends[0].keyword;
-        }
-    } else if (shouldFilterByType && selectedAnalysisType === 'trend') {
-        // Reset trends chart if trend analysis was selected but not available
-        trendsChart.data.labels = [];
-        trendsChart.data.datasets[0].data = [];
-        trendsChart.update();
-        document.getElementById('top-trend').textContent = 'N/A';
     }
 
     // Update brands and models charts
@@ -1204,8 +966,8 @@ function updateDashboard(data, selectedAnalysisType) {
             // Update the brands chart
             const brands = brandData.slice(0, 10);
             brandsChart.data.labels = brands.map(b => b.brand.charAt(0).toUpperCase() + b.brand.slice(1)); // Capitalize first letter
-            brandsChart.data.datasets[0].data = brands.map(b => b.total);
-            brandsChart.update();
+    brandsChart.data.datasets[0].data = brands.map(b => b.total);
+    brandsChart.update();
             
             // Update the models chart
             const models = modelData.slice(0, 10);
@@ -1223,9 +985,6 @@ function updateDashboard(data, selectedAnalysisType) {
                     modelsChart.update();
                 }
             }
-            
-            // Update vehicle safety analysis section with brand and model data
-            updateVehicleSafetyAnalysis(brandData, modelData, data);
         } else if (shouldFilterByType && selectedAnalysisType === 'brands') {
             // Reset brands and models charts if brand analysis was selected but not available
             brandsChart.data.labels = [];
@@ -1238,93 +997,11 @@ function updateDashboard(data, selectedAnalysisType) {
             
             console.warn('Brand analysis selected but not available in the loaded data');
             alert('Brand analysis is not available for the selected dataset');
-            
-            // Reset vehicle safety tables
-            document.getElementById('vehicle-incident-table').getElementsByTagName('tbody')[0].innerHTML = 
-                '<tr><td colspan="4" class="text-center">No vehicle brand data available</td></tr>';
-            document.getElementById('model-incident-table').getElementsByTagName('tbody')[0].innerHTML = 
-                '<tr><td colspan="4" class="text-center">No vehicle model data available</td></tr>';
         }
     }
 
-    // Update analysis table
-    updateAnalysisTable(data, selectedAnalysisType);
-    
-    // Update traffic patterns and journey planner if we have location data
+    // Update traffic patterns
     updateTrafficPatternChart();
-    
-    if (data.location) {
-        updateJourneyPlannerLocations(data.location);
-    }
-}
-
-function updateAnalysisTable(data, selectedAnalysisType) {
-    const tableBody = document.getElementById('analysis-table').getElementsByTagName('tbody')[0];
-    tableBody.innerHTML = '';
-    
-    // If a specific analysis type is selected, only show that data
-    const shouldFilterByType = selectedAnalysisType !== 'all';
-    
-    // Handle different data formats
-    let locationData = [];
-    if (data.location && (!shouldFilterByType || selectedAnalysisType === 'location')) {
-        if (data.location.locations) {
-            locationData = data.location.locations;
-        } else if (data.location.data) {
-            locationData = data.location.data.map(item => {
-                const name = item.key.replace('location:', '');
-                return {
-                    name: name,
-                    count: item.value
-                };
-            });
-        }
-    }
-    
-    if (locationData.length === 0 && !shouldFilterByType) {
-        // Add a message to the table when no data is available
-        const row = tableBody.insertRow();
-        row.innerHTML = '<td colspan="5" class="text-center">No location data available</td>';
-        return;
-    } else if (locationData.length === 0 && shouldFilterByType && selectedAnalysisType === 'location') {
-        const row = tableBody.insertRow();
-        row.innerHTML = '<td colspan="5" class="text-center">Location analysis data not available</td>';
-        return;
-    }
-    
-    // Get sentiment data
-    let sentimentData = [];
-    if (data.sentiment && (!shouldFilterByType || selectedAnalysisType === 'sentiment')) {
-        if (data.sentiment.sentiments) {
-            sentimentData = data.sentiment.sentiments;
-        } else if (data.sentiment.data) {
-            const total = data.sentiment.data.reduce((sum, item) => sum + item.value, 0);
-            sentimentData = data.sentiment.data.map(item => {
-                const sentiment = item.key.replace('sentiment:', '');
-                return {
-                    sentiment: sentiment,
-                    count: item.value,
-                    percentage: Math.round((item.value / total) * 100 * 10) / 10
-                };
-            });
-        }
-    }
-    
-    // If we have location data, populate the table
-    if (locationData.length > 0) {
-        locationData.forEach(loc => {
-            const row = tableBody.insertRow();
-            const sentiment = sentimentData.find(s => s.sentiment === 'positive')?.percentage || 0;
-            
-            row.innerHTML = `
-                <td>${loc.name}</td>
-                <td>${loc.count}</td>
-                <td><span class="severity-${loc.count > 100 ? 'high' : loc.count > 50 ? 'medium' : 'low'}">${loc.count > 100 ? 'High' : loc.count > 50 ? 'Medium' : 'Low'}</span></td>
-                <td>${sentiment.toFixed(1)}%</td>
-                <td><i class="fas fa-arrow-${sentiment > 50 ? 'up trend-up' : 'down trend-down'}"></i></td>
-            `;
-        });
-    }
 }
 
 // Helper function to get coordinates for a location
@@ -1461,20 +1138,23 @@ async function loadDatasets() {
         // Sort datasets by timestamp (newest first)
         const sortedDatasets = Object.values(datasetGroups).sort((a, b) => b.timestamp - a.timestamp);
         
-        // Add options to the dropdown
+        // Add options to the dropdown - filter out any datasets that only have 'trend' analysis
         sortedDatasets.forEach(group => {
-            // Format the display name to include dataset name, analysis types, and date
-            const analysisTypes = group.analysisTypes.map(type => type.charAt(0).toUpperCase() + type.slice(1)).join(', ');
+            // Filter out 'trend' from the analysis types
+            const filteredTypes = group.analysisTypes.filter(type => type.toLowerCase() !== 'trend');
+            
+            // Skip datasets that only had 'trend' analysis (would now have empty filteredTypes)
+            if (filteredTypes.length === 0) return;
+            
+            const analysisTypes = filteredTypes.map(type => type.charAt(0).toUpperCase() + type.slice(1)).join(', ');
+            
             const displayDate = formatDate(group.run_date);
             const option = document.createElement('option');
             option.value = group.id;
             option.textContent = `${group.dataset} (${analysisTypes}) - ${displayDate}`;
-            option.dataset.types = group.analysisTypes.join(',');
+            option.dataset.types = filteredTypes.join(',');
             select.appendChild(option);
         });
-        
-        // Setup the date range picker based on available datasets
-        setupDateRangePicker(sortedDatasets);
         
         // Load the first dataset if available
         if (sortedDatasets.length > 0) {
@@ -1544,12 +1224,12 @@ function setupDateRangePicker(datasets) {
     const formattedMaxDate = maxDate.toISOString().split('T')[0];
     
     // Initialize the daterangepicker
-    $('#date-range').daterangepicker({
+$('#date-range').daterangepicker({
         startDate: minDate,
         endDate: maxDate,
         minDate: minDate,
         maxDate: maxDate,
-        ranges: {
+    ranges: {
             'All Available Data': [minDate, maxDate],
             'Last 7 Days': [moment(maxDate).subtract(6, 'days'), maxDate],
             'Last 30 Days': [moment(maxDate).subtract(29, 'days'), maxDate]
@@ -1678,30 +1358,10 @@ document.getElementById('dataset-select').addEventListener('change', (e) => {
     }
 });
 
-document.getElementById('analysis-type').addEventListener('change', (e) => {
-    const selectedDataset = document.getElementById('dataset-select').value;
-    if (selectedDataset) {
-        loadData(selectedDataset);
-    }
-});
-
 document.getElementById('refresh-data').addEventListener('click', () => {
     // Run the index update script to refresh data - but actually just refresh the datasets
     // Web browsers can't directly execute bat files
     loadDatasets();
-});
-
-// Add event listener for journey calculator
-document.getElementById('calculate-journey').addEventListener('click', function() {
-    const startLocation = document.getElementById('journey-start').value;
-    const endLocation = document.getElementById('journey-end').value;
-    const departureTime = document.getElementById('journey-time').value;
-    
-    if (startLocation && endLocation) {
-        calculateJourney(startLocation, endLocation, departureTime);
-    } else {
-        alert('Please select both a starting location and destination');
-    }
 });
 
 // Initial data load
@@ -1776,12 +1436,14 @@ function updateAnalysisTypeSelector(availableTypes) {
         'location': 'Location Analysis',
         'traffic': 'Traffic Incidents',
         'sentiment': 'Sentiment Analysis',
-        'brands': 'Brand Analysis',
-        'trend': 'Trend Analysis'
+        'brands': 'Brand Analysis'
     };
     
-    // Add options for each available analysis type
+    // Add options for each available analysis type (excluding 'trend')
     availableTypes.forEach(type => {
+        // Skip trend analysis as it's been removed from the dashboard
+        if (type === 'trend') return;
+
         const option = document.createElement('option');
         option.value = type;
         option.textContent = displayNames[type] || type.charAt(0).toUpperCase() + type.slice(1) + ' Analysis';
@@ -1932,131 +1594,6 @@ function updateSafetyTips(highRiskAreas, mediumRiskAreas) {
     document.getElementById('safety-tips-count').textContent = Math.min(tips.length, 5);
 }
 
-// Function to update the vehicle safety analysis section
-function updateVehicleSafetyAnalysis(brandData, modelData, allData) {
-    // Update brand incident table
-    const brandTableBody = document.getElementById('vehicle-incident-table').getElementsByTagName('tbody')[0];
-    brandTableBody.innerHTML = '';
-    
-    if (brandData.length > 0) {
-        // Get top 10 brands
-        const topBrands = brandData.slice(0, 10);
-        
-        // For each brand, calculate incident association and sentiment
-        topBrands.forEach(brand => {
-            // Associate with incidents if we have traffic data
-            let incidentAssociation = 'N/A';
-            let incidentClass = '';
-            
-            // Determine incident association level (simplified estimation)
-            if (brand.total > 100) {
-                incidentAssociation = 'High';
-                incidentClass = 'text-danger';
-            } else if (brand.total > 50) {
-                incidentAssociation = 'Medium';
-                incidentClass = 'text-warning';
-            } else {
-                incidentAssociation = 'Low';
-                incidentClass = 'text-success';
-            }
-            
-            // Estimate sentiment (using any sentiment data if available)
-            let sentiment = 'Neutral';
-            let sentimentClass = 'text-secondary';
-            
-            if (allData.sentiment && allData.sentiment.data) {
-                // This is simplified - in a real application, we would need to join brand and sentiment data properly
-                const positiveRatio = allData.sentiment.data.find(s => s.key.includes('positive'))?.value || 0;
-                const negativeRatio = allData.sentiment.data.find(s => s.key.includes('negative'))?.value || 0;
-                const total = positiveRatio + negativeRatio;
-                
-                if (total > 0) {
-                    if (positiveRatio > negativeRatio) {
-                        sentiment = 'Positive';
-                        sentimentClass = 'text-success';
-                    } else if (negativeRatio > positiveRatio) {
-                        sentiment = 'Negative';
-                        sentimentClass = 'text-danger';
-                    }
-                }
-            }
-            
-            // Create table row
-            const row = brandTableBody.insertRow();
-            row.innerHTML = `
-                <td><strong>${brand.brand.charAt(0).toUpperCase() + brand.brand.slice(1)}</strong></td>
-                <td>${brand.total}</td>
-                <td class="${incidentClass}">${incidentAssociation}</td>
-                <td class="${sentimentClass}">${sentiment}</td>
-            `;
-        });
-    } else {
-        brandTableBody.innerHTML = '<tr><td colspan="4" class="text-center">No vehicle brand data available</td></tr>';
-    }
-    
-    // Update model incident table
-    const modelTableBody = document.getElementById('model-incident-table').getElementsByTagName('tbody')[0];
-    modelTableBody.innerHTML = '';
-    
-    if (modelData.length > 0) {
-        // Get top 10 models
-        const topModels = modelData.slice(0, 10);
-        
-        // Define a mapping of models to brands (in a real app, this would come from your data)
-        const modelToBrand = {
-            'civic': 'Honda',
-            'accord': 'Honda',
-            'cr-v': 'Honda',
-            'fit': 'Honda',
-            'jazz': 'Honda',
-            'hrv': 'Honda',
-            'city': 'Honda',
-            'corolla': 'Toyota',
-            'camry': 'Toyota',
-            'rav4': 'Toyota',
-            'prius': 'Toyota',
-            'yaris': 'Toyota',
-            'altis': 'Toyota',
-            'focus': 'Ford',
-            'fusion': 'Ford',
-            'escape': 'Ford',
-            'mustang': 'Ford',
-            'a3': 'Audi',
-            'a4': 'Audi',
-            'a6': 'Audi',
-            'q5': 'Audi',
-            '325i': 'BMW',
-            '330i': 'BMW',
-            'x3': 'BMW',
-            'x5': 'BMW'
-        };
-        
-        // Common incident types for simulation purposes
-        const incidentTypes = ['Collision', 'Near Miss', 'Breakdown', 'Traffic Violation', 'Lane Change'];
-        
-        topModels.forEach(model => {
-            // Get the brand for this model
-            let brand = modelToBrand[model.model.toLowerCase()] || 'Unknown';
-            
-            // For simulation, assign a random incident type based on model name
-            // In a real application, this would come from your actual data
-            const modelNameHash = model.model.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            const incidentType = incidentTypes[modelNameHash % incidentTypes.length];
-            
-            // Create table row
-            const row = modelTableBody.insertRow();
-            row.innerHTML = `
-                <td><strong>${model.model.charAt(0).toUpperCase() + model.model.slice(1)}</strong></td>
-                <td>${brand}</td>
-                <td>${model.total}</td>
-                <td>${incidentType}</td>
-            `;
-        });
-    } else {
-        modelTableBody.innerHTML = '<tr><td colspan="4" class="text-center">No vehicle model data available</td></tr>';
-    }
-}
-
 // Function to update the Reddit sentiment analysis section
 function updateRedditSentimentAnalysis(sentimentData, allData) {
     // Update sentiment percentages and progress bars
@@ -2079,9 +1616,6 @@ function updateRedditSentimentAnalysis(sentimentData, allData) {
     
     // Update driver insights based on sentiment data
     updateDriverInsights(sentimentData, allData);
-    
-    // Update Reddit comments (simulated)
-    updateRedditComments(sentimentData, allData);
 }
 
 // Function to update key sentiment topics
@@ -2089,34 +1623,14 @@ function updateSentimentTopics(allData) {
     const topicsContainer = document.getElementById('sentiment-topics');
     topicsContainer.innerHTML = '';
     
-    // Use trend data if available, otherwise create sample topics
-    let topics = [];
-    
-    if (allData.trend && allData.trend.data) {
-        // Extract topics from trend data
-        topics = allData.trend.data
-            .filter(item => item.key.includes('keyword:') || item.key.includes('trend:'))
-            .map(item => {
-                const keyword = item.key.split(':')[1] || item.key;
-                return {
-                    topic: keyword,
-                    count: item.value,
-                    sentiment: Math.random() > 0.5 ? 'positive' : 'negative' // Simulated sentiment for topics
-                };
-            })
-            .slice(0, 5);
-    }
-    
-    // If no topics found, create sample ones
-    if (topics.length === 0) {
-        topics = [
-            { topic: 'Traffic jams', count: 135, sentiment: 'negative' },
-            { topic: 'Road construction', count: 87, sentiment: 'negative' },
-            { topic: 'New expressway', count: 72, sentiment: 'positive' },
-            { topic: 'Public transport', count: 54, sentiment: 'neutral' },
-            { topic: 'ERP rates', count: 48, sentiment: 'negative' }
-        ];
-    }
+    // Create sample topics since we no longer have trend data
+    const topics = [
+        { topic: 'Traffic jams', count: 135, sentiment: 'negative' },
+        { topic: 'Road construction', count: 87, sentiment: 'negative' },
+        { topic: 'New expressway', count: 72, sentiment: 'positive' },
+        { topic: 'Public transport', count: 54, sentiment: 'neutral' },
+        { topic: 'ERP rates', count: 48, sentiment: 'negative' }
+    ];
     
     // Create topic elements
     topics.forEach(topic => {
@@ -2184,78 +1698,6 @@ function updateDriverInsights(sentimentData, allData) {
     insightsContainer.innerHTML = insights;
 }
 
-// Function to generate simulated Reddit comments
-function updateRedditComments(sentimentData, allData) {
-    const commentsContainer = document.getElementById('reddit-comments');
-    commentsContainer.innerHTML = '';
-    
-    // Generate simulated comments
-    const comments = [
-        {
-            username: 'sg_driver_2023',
-            text: 'Got stuck in a massive jam on PIE this morning. Took an hour longer than usual!',
-            sentiment: 'negative',
-            upvotes: 45,
-            time: '2 hours ago'
-        },
-        {
-            username: 'ecp_commuter',
-            text: 'New lane expansion on ECP has really improved traffic flow. Much better than last month.',
-            sentiment: 'positive',
-            upvotes: 32,
-            time: '3 hours ago'
-        },
-        {
-            username: 'TrafficUpdates_SG',
-            text: 'Accident reported on CTE near Braddell exit. Avoid the area if possible.',
-            sentiment: 'neutral',
-            upvotes: 67,
-            time: '1 hour ago'
-        },
-        {
-            username: 'SingaporeRoad_User',
-            text: 'Has anyone noticed the new traffic light timing at Orchard? Seems much more efficient now.',
-            sentiment: 'positive',
-            upvotes: 21,
-            time: '4 hours ago'
-        },
-        {
-            username: 'daily_commuter',
-            text: 'Rain + rush hour = disaster on AYE today. Please leave earlier if heading west.',
-            sentiment: 'negative',
-            upvotes: 39,
-            time: '2 hours ago'
-        }
-    ];
-    
-    // Add comments to the list
-    comments.forEach(comment => {
-        const sentimentClass = comment.sentiment === 'positive' ? 'success' : 
-                               comment.sentiment === 'negative' ? 'danger' : 'secondary';
-        
-        const commentElement = document.createElement('li');
-        commentElement.className = 'list-group-item';
-        commentElement.innerHTML = `
-            <div class="d-flex justify-content-between">
-                <div>
-                    <strong class="text-primary">u/${comment.username}</strong> 
-                    <span class="text-${sentimentClass} small">
-                        <i class="fas fa-${comment.sentiment === 'positive' ? 'smile' : 
-                                         comment.sentiment === 'negative' ? 'frown' : 'meh'}"></i>
-                    </span>
-                </div>
-                <small class="text-muted">${comment.time}</small>
-            </div>
-            <p class="mb-1">${comment.text}</p>
-            <small class="text-muted">
-                <i class="fas fa-arrow-up"></i> ${comment.upvotes} upvotes
-            </small>
-        `;
-        
-        commentsContainer.appendChild(commentElement);
-    });
-}
-
 // Function to reset Reddit sentiment section when no data is available
 function resetRedditSentimentSection() {
     document.getElementById('positive-percentage').textContent = '-';
@@ -2268,7 +1710,6 @@ function resetRedditSentimentSection() {
     
     document.getElementById('sentiment-topics').innerHTML = '<div class="list-group-item">No sentiment data available</div>';
     document.getElementById('sentiment-insights').innerHTML = '<p>No sentiment data available for analysis</p>';
-    document.getElementById('reddit-comments').innerHTML = '<li class="list-group-item">No Reddit comments available</li>';
 }
 
 // Function to update traffic patterns and journey planning
@@ -2286,166 +1727,7 @@ function updateTrafficPatternChart() {
     timePatternChart.update();
 }
 
-// Function to update journey planner locations
-function updateJourneyPlannerLocations(locationData) {
-    // Get locations from the data
-    let locations = [];
-    
-    if (locationData.locations) {
-        locations = locationData.locations;
-    } else if (locationData.data) {
-        locations = locationData.data.map(item => {
-            const name = item.key.replace('location:', '');
-            return {
-                name: name,
-                count: item.value
-            };
-        });
-    }
-    
-    if (locations.length === 0) return;
-    
-    // Sort locations by name
-    locations.sort((a, b) => a.name.localeCompare(b.name));
-    
-    // Populate dropdowns
-    const startSelect = document.getElementById('journey-start');
-    const endSelect = document.getElementById('journey-end');
-    
-    // Clear existing options (except the default one)
-    startSelect.innerHTML = '<option value="">Select starting point...</option>';
-    endSelect.innerHTML = '<option value="">Select destination...</option>';
-    
-    // Add locations to both dropdowns
-    locations.forEach(loc => {
-        const option1 = document.createElement('option');
-        option1.value = loc.name;
-        option1.textContent = loc.name.charAt(0).toUpperCase() + loc.name.slice(1);
-        startSelect.appendChild(option1);
-        
-        const option2 = document.createElement('option');
-        option2.value = loc.name;
-        option2.textContent = loc.name.charAt(0).toUpperCase() + loc.name.slice(1);
-        endSelect.appendChild(option2);
-    });
-}
-
-// Function to calculate a journey between two locations
-function calculateJourney(startLocation, endLocation, departureTime) {
-    const resultsContainer = document.getElementById('journey-results');
-    
-    // Simple validation
-    if (startLocation === endLocation) {
-        resultsContainer.innerHTML = `
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i> Starting point and destination are the same.
-            </div>
-        `;
-        return;
-    }
-    
-    // Get time factor based on selected departure time
-    let timeFactor = 1.0;
-    let congestionLevel = 'moderate';
-    let congestionClass = 'warning';
-    
-    switch (departureTime) {
-        case 'morning_rush':
-            timeFactor = 1.5;
-            congestionLevel = 'high';
-            congestionClass = 'danger';
-            break;
-        case 'evening_rush':
-            timeFactor = 1.4;
-            congestionLevel = 'high';
-            congestionClass = 'danger';
-            break;
-        case 'midday':
-            timeFactor = 1.2;
-            congestionLevel = 'moderate';
-            congestionClass = 'warning';
-            break;
-        case 'night':
-            timeFactor = 1.0;
-            congestionLevel = 'low';
-            congestionClass = 'success';
-            break;
-    }
-    
-    // Calculate a simulated route and time (this is a simplified example)
-    // In a real application, this would call a routing API with actual traffic data
-    
-    // Simulated base travel time (minutes)
-    const baseTime = Math.floor(Math.random() * 20) + 15;
-    
-    // Apply time factor based on time of day
-    const estimatedTime = Math.round(baseTime * timeFactor);
-    
-    // Simulated routes (for demo purposes)
-    const possibleRoutes = [
-        { name: 'Express Route via ECP', time: estimatedTime, distance: '12.5 km' },
-        { name: 'Alternative Route via PIE', time: Math.round(estimatedTime * 1.1), distance: '14.8 km' },
-        { name: 'Scenic Route', time: Math.round(estimatedTime * 1.25), distance: '16.2 km' }
-    ];
-    
-    // Sort routes by time (fastest first)
-    possibleRoutes.sort((a, b) => a.time - b.time);
-    
-    // Get hour string from departure time
-    let hourString = '';
-    switch (departureTime) {
-        case 'morning_rush': hourString = 'Morning Rush Hour (7-9 AM)'; break;
-        case 'midday': hourString = 'Midday (10 AM - 4 PM)'; break;
-        case 'evening_rush': hourString = 'Evening Rush Hour (5-7 PM)'; break;
-        case 'night': hourString = 'Night (8 PM - 6 AM)'; break;
-    }
-    
-    // Create the results HTML
-    let resultsHTML = `
-        <h5>Journey Results</h5>
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <p><strong>From:</strong> ${startLocation.charAt(0).toUpperCase() + startLocation.slice(1)}</p>
-                <p><strong>To:</strong> ${endLocation.charAt(0).toUpperCase() + endLocation.slice(1)}</p>
-                <p><strong>Departure:</strong> ${hourString}</p>
-            </div>
-            <div class="col-md-6">
-                <p><strong>Congestion Level:</strong> <span class="text-${congestionClass}">${congestionLevel.toUpperCase()}</span></p>
-                <p><strong>Best Travel Time:</strong> ${possibleRoutes[0].time} minutes</p>
-                <p><strong>Distance:</strong> ${possibleRoutes[0].distance}</p>
-            </div>
-        </div>
-        <h6>Recommended Routes:</h6>
-        <ul class="list-group">
-    `;
-    
-    // Add each route option
-    possibleRoutes.forEach((route, index) => {
-        const isRecommended = index === 0;
-        resultsHTML += `
-            <li class="list-group-item ${isRecommended ? 'list-group-item-success' : ''}">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>${route.name}</strong>
-                        ${isRecommended ? '<span class="badge bg-success ms-2">Recommended</span>' : ''}
-                    </div>
-                    <div>
-                        <span class="badge bg-secondary">${route.time} min</span>
-                        <span class="badge bg-secondary ms-2">${route.distance}</span>
-                    </div>
-                </div>
-            </li>
-        `;
-    });
-    
-    resultsHTML += `
-        </ul>
-        <div class="alert alert-info mt-3">
-            <i class="fas fa-info-circle"></i> Traffic conditions may change. Check real-time updates before departing.
-        </div>
-    `;
-    
-    resultsContainer.innerHTML = resultsHTML;
-}
+// Update traffic patterns
+updateTrafficPatternChart();
 </script>
 {% endblock %} 
